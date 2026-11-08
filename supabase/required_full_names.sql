@@ -1,24 +1,25 @@
 -- Profi.UZ: first name + last name in a shared profile for website and apps.
 alter table public.profiles add column if not exists first_name text;
 alter table public.profiles add column if not exists last_name text;
+alter table public.profiles add column if not exists contact_email text;
 
 -- Existing users must complete both fields at their next sign-in.
 -- Only authenticated owners can set their own names through this function.
-create or replace function public.set_my_full_name(p_first_name text,p_last_name text)
+drop function if exists public.set_my_full_name(text,text);
+create or replace function public.set_my_full_name(p_first_name text,p_last_name text,p_email text)
 returns void language plpgsql security definer set search_path='' as $fn$
-declare f text:=btrim(coalesce(p_first_name,''));l text:=btrim(coalesce(p_last_name,''));
+declare f text:=btrim(coalesce(p_first_name,''));l text:=btrim(coalesce(p_last_name,''));e text:=lower(btrim(coalesce(p_email,'')));
 begin
  if auth.uid() is null then raise exception 'Login required'; end if;
- if char_length(f) not between 2 and 70 or char_length(l) not between 2 and 70
- or f !~ '^[[:alpha:]][[:alpha:] ''-]*[[:alpha:]]$'
- or l !~ '^[[:alpha:]][[:alpha:] ''-]*[[:alpha:]]$' then
- raise exception 'First and last name are required'; end if;
- insert into public.profiles(id,role,first_name,last_name,display_name)
- values(auth.uid(),'client',f,l,l||' '||f)
- on conflict(id) do update set first_name=excluded.first_name,last_name=excluded.last_name,display_name=excluded.display_name;
+ if char_length(f) not between 2 and 70 or char_length(l) not between 2 and 70 or f ~ '[0-9]' or l ~ '[0-9]' or
+ char_length(e) not between 5 and 254 or e !~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$' then
+ raise exception 'Valid first name, last name and email are required'; end if;
+ insert into public.profiles(id,role,first_name,last_name,contact_email,display_name)
+ values(auth.uid(),'client',f,l,e,l||' '||f)
+ on conflict(id) do update set first_name=excluded.first_name,last_name=excluded.last_name,contact_email=excluded.contact_email,display_name=excluded.display_name;
 end;$fn$;
-revoke all on function public.set_my_full_name(text,text) from public,anon;
-grant execute on function public.set_my_full_name(text,text) to authenticated;
+revoke all on function public.set_my_full_name(text,text,text) from public,anon;
+grant execute on function public.set_my_full_name(text,text,text) to authenticated;
 
 -- Keep names synchronized for all newly created auth users, regardless of provider.
 create or replace function public.profi_sync_auth_names()
@@ -26,9 +27,9 @@ returns trigger language plpgsql security definer set search_path='' as $trigger
 declare f text:=nullif(btrim(new.raw_user_meta_data->>'first_name'),'');l text:=nullif(btrim(new.raw_user_meta_data->>'last_name'),'');
 begin
  if f is not null and l is not null then
-  insert into public.profiles(id,role,first_name,last_name,display_name)
-  values(new.id,'client',f,l,l||' '||f)
-  on conflict(id) do update set first_name=excluded.first_name,last_name=excluded.last_name,display_name=excluded.display_name;
+  insert into public.profiles(id,role,first_name,last_name,contact_email,display_name)
+  values(new.id,'client',f,l,new.email,l||' '||f)
+  on conflict(id) do update set first_name=excluded.first_name,last_name=excluded.last_name,contact_email=excluded.contact_email,display_name=excluded.display_name;
  end if;
  return new;
 end;$trigger$;
