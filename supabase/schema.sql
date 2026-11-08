@@ -66,7 +66,18 @@ create policy "proposals_update_client" on public.proposals for update to authen
 using(exists(select 1 from public.orders o where o.id=order_id and o.client_id=auth.uid()))
 with check(exists(select 1 from public.orders o where o.id=order_id and o.client_id=auth.uid()));
 
--- Protect role changes: users cannot elevate themselves to specialist without verification.\ncreate or replace function public.prevent_profile_role_change() returns trigger language plpgsql as $\nbegin\n if new.role is distinct from old.role then\n  raise exception 'Role changes require administrator verification';\n end if;\n return new;\nend; $;\ndrop trigger if exists protect_profile_role on public.profiles;\ncreate trigger protect_profile_role before update on public.profiles for each row execute function public.prevent_profile_role_change();\n\n-- Profile auto-creation after signup, with no trusted role derived from user metadata.
+-- Protect role changes: users cannot elevate themselves to specialist without verification.
+create or replace function public.prevent_profile_role_change() returns trigger language plpgsql as $
+begin
+ if new.role is distinct from old.role then
+  raise exception 'Role changes require administrator verification';
+ end if;
+ return new;
+end; $;
+drop trigger if exists protect_profile_role on public.profiles;
+create trigger protect_profile_role before update on public.profiles for each row execute function public.prevent_profile_role_change();
+
+-- Profile auto-creation after signup, with no trusted role derived from user metadata.
 create or replace function public.create_new_profile()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
@@ -80,5 +91,11 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
 for each row execute procedure public.create_new_profile();
 
--- API permissions are explicit because automatic table exposure is disabled.\ngrant usage on schema public to authenticated;\ngrant select, insert, update on public.profiles to authenticated;\ngrant select, insert, update, delete on public.orders to authenticated;\ngrant select, insert, update on public.proposals to authenticated;\n\n-- Before production: enforce proposal status transitions in a trusted server function,
+-- API permissions are explicit because automatic table exposure is disabled.
+grant usage on schema public to authenticated;
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, update, delete on public.orders to authenticated;
+grant select, insert, update on public.proposals to authenticated;
+
+-- Before production: enforce proposal status transitions in a trusted server function,
 -- review role onboarding, add anti-spam controls and moderation.
