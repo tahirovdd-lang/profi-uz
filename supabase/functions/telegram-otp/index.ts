@@ -37,7 +37,7 @@ Deno.serve(async(req)=>{
  if(body?.action==="start"){
   const id=crypto.randomUUID();
   const {error}=await db.from("telegram_login_challenges").insert({id});
-  if(error)return json({error:"Could not start login"},500);
+  if(error){console.error("telegram-otp start database insert failed",JSON.stringify({code:error.code,message:error.message,details:error.details,hint:error.hint}));return json({error:error.code==="42P01"||error.code==="PGRST205"?"Telegram OTP database table is missing. Run supabase/telegram_otp.sql":error.code==="42501"?"Telegram OTP database permissions are incorrect. Check service_role key and table privileges":"Telegram OTP database error. Check Edge Function logs and SQL migration",error_code:error.code||"DB_ERROR"},503)}
   return json({challenge_id:id,bot_url:"https://t.me/"+(env("TELEGRAM_BOT_USERNAME")||"Profiuzbekistan_bot")+"?start="+id,expires_in:300});
  }
  if(body?.action==="verify"){
