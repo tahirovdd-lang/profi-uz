@@ -44,7 +44,7 @@ alter table public.orders enable row level security;
 alter table public.proposals enable row level security;
 
 -- A user can create and edit only their own profile.
-create policy "profiles_read_authenticated" on public.profiles for select to authenticated using(true);
+create policy "profiles_read_self" on public.profiles for select to authenticated using(id=auth.uid());
 create policy "profiles_insert_self" on public.profiles for insert to authenticated with check(id=auth.uid());
 create policy "profiles_update_self" on public.profiles for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
 
@@ -66,7 +66,7 @@ create policy "proposals_update_client" on public.proposals for update to authen
 using(exists(select 1 from public.orders o where o.id=order_id and o.client_id=auth.uid()))
 with check(exists(select 1 from public.orders o where o.id=order_id and o.client_id=auth.uid()));
 
--- Profile auto-creation after signup, with no trusted role derived from user metadata.
+-- Protect role changes: users cannot elevate themselves to specialist without verification.\ncreate or replace function public.prevent_profile_role_change() returns trigger language plpgsql as $\nbegin\n if new.role is distinct from old.role then\n  raise exception 'Role changes require administrator verification';\n end if;\n return new;\nend; $;\ndrop trigger if exists protect_profile_role on public.profiles;\ncreate trigger protect_profile_role before update on public.profiles for each row execute function public.prevent_profile_role_change();\n\n-- Profile auto-creation after signup, with no trusted role derived from user metadata.
 create or replace function public.create_new_profile()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
@@ -81,4 +81,4 @@ create trigger on_auth_user_created after insert on auth.users
 for each row execute procedure public.create_new_profile();
 
 -- Before production: enforce proposal status transitions in a trusted server function,
--- restrict profile role changes, add anti-spam controls and moderation.
+-- review role onboarding, add anti-spam controls and moderation.
