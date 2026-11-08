@@ -31,11 +31,18 @@ with check (
  )
 );
 grant select,insert on public.chat_messages to authenticated;
+-- Security-definer membership check avoids circular RLS between orders and proposals.
+create or replace function public.is_selected_specialist(p_order_id uuid)
+returns boolean language sql stable security definer set search_path='' as $check$
+ select exists(select 1 from public.proposals p where p.order_id=p_order_id and p.specialist_id=auth.uid() and p.status='accepted')
+$check$;
+revoke all on function public.is_selected_specialist(uuid) from public,anon;
+grant execute on function public.is_selected_specialist(uuid) to authenticated;
 -- Make accepted orders readable to their chosen specialist, not just open orders.
 drop policy if exists orders_read on public.orders;
 create policy orders_read on public.orders for select to authenticated using(
  client_id=auth.uid()
  or (status='open' and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='specialist'))
- or (exists(select 1 from public.proposals p where p.order_id=orders.id and p.specialist_id=auth.uid() and p.status='accepted'))
+ or public.is_selected_specialist(orders.id)
 );
 notify pgrst, 'reload schema';
