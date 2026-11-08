@@ -17,6 +17,42 @@ const regions=[
 ["Республика Каракалпакстан","Qoraqalpog‘iston Respublikasi","Ҷумҳурии Қароқалпоқистон",["Nukus","Beruniy","Khujayli","Muynak"]]
 ];
 const names={Samarkand:["Самарканд","Samarqand","Самарқанд"],Tashkent:["Ташкент","Toshkent","Тошканд"],Bukhara:["Бухара","Buxoro","Бухоро"],Andijan:["Андижан","Andijon","Андиҷон"],Fergana:["Фергана","Farg‘ona","Фарғона"],Kokand:["Коканд","Qo‘qon","Қӯқанд"],Margilan:["Маргилан","Marg‘ilon","Марғилон"],Namangan:["Наманган","Namangan","Намангон"],Karshi:["Карши","Qarshi","Қаршӣ"],Termez:["Термез","Termiz","Тирмиз"],Jizzakh:["Джизак","Jizzax","Ҷиззах"],Gulistan:["Гулистан","Guliston","Гулистон"],Navoi:["Навои","Navoiy","Навоӣ"],Urgench:["Ургенч","Urganch","Урганҷ"],Khiva:["Хива","Xiva","Хива"],Nukus:["Нукус","Nukus","Нукус"]};
+Object.assign(names,{
+"Nurafshon":["Нурафшон","Nurafshon","Нурафшон"],
+"Chirchiq":["Чирчик","Chirchiq","Чирчиқ"],
+"Angren":["Ангрен","Angren","Ангрен"],
+"Olmaliq":["Алмалык","Olmaliq","Олмалиқ"],
+"Bekobod":["Бекабад","Bekobod","Бекобод"],
+"Yangiyo‘l":["Янгиюль","Yangiyo‘l","Янгийӯл"],
+"Kattakurgan":["Каттакурган","Kattaqo‘rg‘on","Каттақӯрғон"],
+"Urgut":["Ургут","Urgut","Ургут"],
+"Jomboy":["Джамбай","Jomboy","Ҷомбой"],
+"Bulungur":["Булунгур","Bulung‘ur","Булунғур"],
+"Kogon":["Каган","Kogon","Когон"],
+"Gijduvon":["Гиждуван","G‘ijduvon","Ғиждувон"],
+"Asaka":["Асака","Asaka","Асака"],
+"Shahrixon":["Шахрихан","Shahrixon","Шаҳрихон"],
+"Xonobod":["Ханабад","Xonobod","Хонобод"],
+"Quva":["Кува","Quva","Қува"],
+"Chust":["Чуст","Chust","Чуст"],
+"Chortoq":["Чартак","Chortoq","Чортоқ"],
+"Pop":["Пап","Pop","Поп"],
+"Shahrisabz":["Шахрисабз","Shahrisabz","Шаҳрисабз"],
+"Kitob":["Китаб","Kitob","Китоб"],
+"Guzor":["Гузар","G‘uzor","Ғузор"],
+"Denov":["Денау","Denov","Денов"],
+"Sherobod":["Шерабад","Sherobod","Шеробод"],
+"Gallaorol":["Галляарал","G‘allaorol","Ғаллаорол"],
+"Dashtobod":["Даштобод","Dashtobod","Даштобод"],
+"Yangiyer":["Янгиер","Yangiyer","Янгиер"],
+"Shirin":["Ширин","Shirin","Ширин"],
+"Zarafshan":["Зарафшан","Zarafshon","Зарафшон"],
+"Karmana":["Кармана","Karmana","Кармана"],
+"Hazorasp":["Хазарасп","Hazorasp","Ҳазорасп"],
+"Beruniy":["Беруни","Beruniy","Берунӣ"],
+"Khujayli":["Ходжейли","Xo‘jayli","Хоҷайлӣ"],
+"Muynak":["Муйнак","Mo‘ynoq","Мӯйноқ"]
+});
 const langs=["ru","uz","tj"];const phrases={ru:["Выберите регион и город","Регион","Город","Сохранить","Отмена","Другой населённый пункт","Название населённого пункта"],uz:["Viloyat va shaharni tanlang","Viloyat","Shahar","Saqlash","Bekor qilish","Boshqa aholi punkti","Aholi punkti nomi"],tj:["Вилоят ва шаҳрро интихоб кунед","Вилоят","Шаҳр","Сабт кардан","Бекор кардан","Маҳалли дигар","Номи маҳалли аҳолинишин"]};
 const el=id=>document.getElementById(id),locale=()=>langs.includes(localStorage.getItem("profi_lang"))?localStorage.getItem("profi_lang"):"ru";
 let city=localStorage.getItem("profi_city")||"Samarkand",region=localStorage.getItem("profi_region")||"Самаркандская область";
