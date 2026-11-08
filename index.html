@@ -14,6 +14,65 @@
 .directory-grid{gap:20px}.profi-card{background:#fff;border:1px solid #e7eaf1;border-radius:22px;padding:20px;box-shadow:0 12px 32px rgba(22,38,62,.07);display:flex;flex-direction:column;gap:12px}.profi-card-head{align-items:center}.profi-card-head img,.profi-avatar-placeholder{width:76px;height:76px;border-radius:19px;object-fit:cover;flex-shrink:0}.profi-avatar-placeholder{display:grid;place-items:center;background:linear-gradient(135deg,#ffdfeb,#dceaff);color:#d72b51;font-size:30px;font-weight:800}.profi-card-head h3{font-size:20px;color:#192841;line-height:1.2}.profi-card-head p{color:#697589;font-size:13px}.profi-card-rating{font-weight:750;color:#e39a13}.profi-card-description{color:#536078;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.profi-card .profi-portfolio img{width:112px;height:86px}.profi-card .profi-tags{margin:0}.profi-card .profi-tags span{background:#fff0f4;color:#ac2b4c}.profi-card .profi-open{margin-top:auto;width:100%;padding:13px 16px}.specialist-dialog{width:min(94vw,840px);max-width:840px;max-height:90dvh;overflow-y:auto;padding:0;border-radius:26px;box-shadow:0 24px 100px #17263e55}.specialist-dialog::backdrop{background:#14243ab5}.specialist-dialog-close{position:sticky;top:12px;float:right;margin:12px 12px -50px 0;z-index:5;width:40px;height:40px;border-radius:50%;background:#fff;color:#24344e;font-size:27px;box-shadow:0 3px 15px #0002}.specialist-profile{padding:30px}.specialist-profile-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(125deg,#fff0f5,#edf4ff);padding:26px;border-radius:20px}.specialist-profile-hero img,.specialist-profile-hero .profi-avatar-placeholder{width:112px;height:112px;border-radius:23px}.specialist-profile-hero h2{font-size:clamp(24px,4vw,34px);margin:0 0 8px}.specialist-profile-meta{color:#5b6880;line-height:1.6}.specialist-profile h3{color:#192841;margin:27px 0 12px}.specialist-profile-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.specialist-profile-gallery a{display:block;aspect-ratio:4/3;overflow:hidden;border-radius:14px;background:#eef1f7}.specialist-profile-gallery img{width:100%;height:100%;object-fit:cover;transition:transform .2s}.specialist-profile-gallery a:hover img{transform:scale(1.05)}.specialist-profile-reviews{display:grid;gap:12px}.specialist-profile-review{padding:16px;border:1px solid #edf0f5;border-radius:14px;background:#fbfcfe}.specialist-profile-review p{margin:8px 0 0;line-height:1.5}.specialist-profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.specialist-profile-actions button{flex:1;min-width:160px}.specialist-profile-notice{color:#68748a;font-size:13px;margin-top:12px}@media(max-width:600px){.specialist-profile{padding:16px}.specialist-profile-hero{padding:16px;gap:14px;align-items:flex-start}.specialist-profile-hero img,.specialist-profile-hero .profi-avatar-placeholder{width:75px;height:75px;border-radius:15px}.specialist-profile-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.specialist-profile-actions{flex-direction:column}.specialist-profile-actions button{width:100%}.specialist-dialog{max-height:94dvh}}
 </style><style>
 .accountbar{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:14px 0;flex-wrap:wrap}.outline{border:1px solid #e2e4eb;background:white;border-radius:12px;padding:12px 16px;font-weight:700}.outline:hover{background:#f5f6fa}.dashboard{margin:0 0 60px;padding:25px;border:1px solid #e8e9ee;border-radius:24px;background:#fff}.dashboard h2{margin:0 0 8px}.dashgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.dashpanel{background:#f6f7fa;padding:20px;border-radius:16px}.dashpanel h3{margin-top:0}.dashitem{background:white;border-radius:12px;padding:15px;margin:10px 0;overflow-wrap:anywhere}.dashitem p{color:#69707e;font-size:14px}.dashitem button{padding:10px 15px;border-radius:10px;background:#f02e52;color:white}.profilefield{display:block;width:100%;border:1px solid #d9dce4;border-radius:10px;padding:12px;margin:8px 0 14px}.tag{display:inline-block;background:#fce4e9;color:#ba2544;border-radius:30px;padding:5px 10px;font-size:12px;font-weight:700}.empty{color:#727989}.dashboard[hidden]{display:none}[hidden]{display:none!important}#roleTools .outline.primary{background:#ef3055;color:#fff;border-color:#ef3055}#roleTools .outline:not(.primary){background:#fff;color:#2679e9}@media(max-width:750px){.dashgrid{grid-template-columns:1fr}.accountbar{justify-content:stretch}.accountbar button{flex:1}.dashboard{padding:16px}}
+
+/* Mobile-first iOS / Android comfort and smooth scrolling */
+html{scroll-behavior:smooth;scroll-padding-top:18px;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior-y:contain}
+body{min-width:320px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{touch-action:manipulation}
+button,.primary,.outline,.entry-role,.card,.service-link{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #f02e52;outline-offset:3px}
+#liveApp,#proDirectory,#chatApp,.hero,.service-group{scroll-margin-top:18px}
+.specialist-dialog,.chat-messages,.profi-portfolio,.upload-preview{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.specialist-dialog{scrollbar-width:thin}
+.profi-portfolio{scroll-snap-type:x proximity;scroll-padding-inline:4px}
+.profi-portfolio img{scroll-snap-align:start}
+@media(hover:none){.photo-card:hover,.entry-role:hover{transform:none}.photo-card:hover img{transform:none}}
+@media(max-width:850px){.wrap{width:100%;max-width:100%;padding-inline:clamp(14px,4vw,24px)}.hero{gap:20px}.hero-copy{min-width:0}.hero-visual{width:100%}}
+@media(max-width:700px){
+ header .wrap{flex-wrap:wrap;row-gap:8px;padding-block:12px;min-height:unset}
+ header .wrap>div:first-child{min-width:0}
+ .logo{font-size:clamp(22px,6vw,28px)}
+ .city-picker{max-width:min(42vw,170px)}
+ .switch{margin-left:auto}
+ .switch button{min-width:36px;min-height:40px}
+ .entry-roles{width:100%}.entry-role{min-height:48px;max-width:none}
+ .hero h1{font-size:clamp(32px,9vw,48px);letter-spacing:-1.5px;overflow-wrap:break-word}
+ .hero .sub{font-size:16px}
+ .hero .search{gap:10px;margin-top:22px}
+ .search input,.profilefield,input,select,textarea{font-size:16px}
+ .search input{min-height:52px;padding:14px 16px}
+ .search .primary,.primary{min-height:48px}
+ .hero-visual{height:clamp(180px,48vw,300px)}
+ .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:58px}
+ .photo-card{min-height:clamp(130px,35vw,190px)}
+ .photo-card .photo-card-title{font-size:clamp(13px,3.8vw,17px)}
+ .service-catalog{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}
+ .service-link{min-height:36px;display:flex;align-items:center}
+ .banner{margin-bottom:38px}
+ .banner .primary{width:100%}
+ .dashboard{padding:16px;margin-bottom:34px;border-radius:18px}
+ .dashpanel{padding:16px}
+ .directory-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+ .profi-card{padding:16px;min-width:0}
+ .profi-card-head{min-width:0}
+ .profi-card-head>div:last-child{min-width:0;overflow-wrap:anywhere}
+ .specialist-dialog{width:100%;max-width:none;max-height:100dvh;height:100dvh;margin:0;inset:0;border-radius:0;overscroll-behavior:contain;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+ .specialist-dialog-close{top:calc(env(safe-area-inset-top) + 10px);margin-right:14px}
+ .specialist-profile{padding:18px 16px 30px}
+ .specialist-profile-hero{padding:17px 13px}
+ .specialist-profile-hero h2{font-size:clamp(22px,6vw,30px);overflow-wrap:anywhere}
+ .specialist-profile-gallery{gap:9px}
+ .specialist-profile-gallery a{border-radius:12px}
+ .chat-conversation{padding:12px}
+ .chat-messages{max-height:min(55dvh,440px);scroll-behavior:smooth}
+ .chat-bubble{max-width:92%;overflow-wrap:anywhere}
+ .chat-form textarea{font-size:16px}
+ .upload-preview{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
+ .upload-preview .upload-thumb{flex:0 0 auto}
+ footer{padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+}
+@media(max-width:380px){.wrap{padding-inline:12px}.logo{font-size:23px}.city-picker{max-width:115px}.switch button{padding-inline:5px}.entry-role{font-size:13px}.profi-card-head img,.profi-avatar-placeholder{width:62px;height:62px}}
+@media(prefers-reduced-motion:reduce){html,.chat-messages{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-snap-type:none!important}}
 </style><script src="./supabase-config.js"></script></head><body>
 <header><div class="wrap"><div><span class="logo" aria-label="ProfiUZ"><span>Profi</span><svg class="logo-worker" viewBox="0 0 54 62" role="img" aria-label="мастер"><path fill="#0b3150" d="M11 16C11 6 19 2 27 2s16 4 16 14v7H11z"/><path fill="#082944" d="M13 25c0-10 6-15 14-15s14 5 14 15c0 9-6 17-14 17s-14-8-14-17z"/><path fill="#0b3150" d="M10 39c5-3 10-4 17-4s12 1 17 4c6 4 9 12 9 23H1c0-11 3-19 9-23z"/><path fill="#e91f4b" d="M13 42h28l5 20H8z"/><path d="M21 47l13 11M34 47L21 58" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M17 18c8-4 19-4 27 0" fill="none" stroke="#174c72" stroke-width="3"/></svg><span>UZ</span></span><button type="button" class="city-picker" id="locationOpen" aria-label="Выбрать регион и город">📍 <span id="locationName">Самарканд</span> ▾</button></div><div class="switch"><button data-lang="ru">RU</button><button data-lang="uz">UZ</button><button data-lang="tj">TJ</button></div></div></header>
 <div class="wrap"><div id="regionConfirm" class="region-confirm" hidden role="group" aria-label="Подтверждение региона"><span id="regionConfirmText">Ваш регион Самарканд?</span><button id="regionConfirmYes" type="button">Да</button><button id="regionConfirmChange" type="button">Выбрать другой регион</button></div></div><dialog class="location-dialog" id="locationDialog"><h3 id="locationTitle">Выберите регион и город</h3><label id="regionLabel" for="regionSelect">Регион</label><select id="regionSelect"></select><label id="cityLabel" for="citySelect">Город</label><select id="citySelect"></select><input id="customCity" maxlength="80" placeholder="Название населённого пункта" hidden><div style="display:flex;gap:10px"><button class="primary" id="locationSave" type="button">Сохранить</button><button class="outline" id="locationCancel" type="button">Отмена</button></div></dialog><main class="wrap"><div class="entry-roles" role="group" aria-label="Выберите роль"><button class="entry-role selected" type="button" id="entryClient">Заказчик</button><button class="entry-role" type="button" id="entrySpecialist">Специалист</button></div><p class="entry-role-note" id="entryRoleHint">Выберите, кем вы хотите пользоваться сервисом, затем выберите категорию услуг.</p><section class="hero"><div class="hero-copy"><h1 data-i="hero">Найдите своего специалиста</h1><p class="sub" data-i="sub">Удобный поиск услуг в Самарканде</p><div class="search"><input id="q" placeholder="Услуга или специалист"><button class="primary" id="find" data-i="find">Найти</button></div><div id="results"></div></div><div class="hero-visual"><img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Специалисты за работой" fetchpriority="high"><div class="hero-visual-label">Profi.UZ <span>★ ★ ★ ★ ★</span></div></div></section><div class="banner"><strong data-i="banner">Расскажите о задаче — специалисты предложат цену</strong><button class="primary" id="new" data-i="new">Разместить заказ</button></div><section><h2 data-i="categories">Популярные услуги</h2><div class="cards" id="cards"></div><div class="service-catalog" id="serviceCatalog"></div></section><section><h2 data-i="how">Как это работает</h2><div class="steps"><div class="step"><b>01</b><h3 data-i="step1">Опишите задачу</h3></div><div class="step"><b>02</b><h3 data-i="step2">Получите предложения</h3></div><div class="step"><b>03</b><h3 data-i="step3">Выберите мастера</h3></div></div></section></main>
