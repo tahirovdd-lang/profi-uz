@@ -21,7 +21,7 @@ begin
  if new.client_id is distinct from old.client_id or new.category is distinct from old.category or new.description is distinct from old.description or new.city is distinct from old.city or new.created_at is distinct from old.created_at then
  raise exception 'Order details are immutable';
  end if;
- if new.status not in ('open','cancelled','completed') then raise exception 'Invalid owner status change'; end if;
+ if current_user <> 'postgres' and new.status not in ('open','cancelled','completed') then raise exception 'Invalid owner status change'; end if;
  return new;
 end;$$;
 drop trigger if exists protect_order_update on public.orders;
