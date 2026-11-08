@@ -1,5 +1,13 @@
 -- Profi.UZ phase 2. Run ONCE in Supabase SQL Editor.
 -- Self-service specialist enrollment is enabled for the MVP. Profiles are not verified.
+-- Allow only trusted SECURITY DEFINER routines to change a role.
+create or replace function public.prevent_profile_role_change() returns trigger language plpgsql as $
+begin
+ if new.role is distinct from old.role and current_user <> 'postgres' then
+  raise exception 'Role changes require trusted registration';
+ end if;
+ return new;
+end;$;
 create or replace function public.register_as_specialist(p_name text,p_category text,p_bio text,p_phone text)
 returns void language plpgsql security definer set search_path='' as $$
 declare uid uuid:=auth.uid();
