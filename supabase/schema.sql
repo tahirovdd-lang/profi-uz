@@ -50,7 +50,7 @@ create policy "profiles_update_self" on public.profiles for update to authentica
 
 -- Clients own their orders; authenticated specialists can browse open orders.
 create policy "orders_read" on public.orders for select to authenticated
-using(client_id=auth.uid() or (status='open' and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='specialist')) or exists(select 1 from public.proposals x where x.order_id=id and x.specialist_id=auth.uid()));
+using(client_id=auth.uid() or (status='open' and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='specialist')));
 create policy "orders_insert_client" on public.orders for insert to authenticated
 with check(client_id=auth.uid() and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='client'));
 create policy "orders_update_owner" on public.orders for update to authenticated
@@ -80,5 +80,5 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
 for each row execute procedure public.create_new_profile();
 
--- Before production: enforce proposal status transitions in a trusted server function,
+-- API permissions are explicit because automatic table exposure is disabled.\ngrant usage on schema public to authenticated;\ngrant select, insert, update on public.profiles to authenticated;\ngrant select, insert, update, delete on public.orders to authenticated;\ngrant select, insert, update on public.proposals to authenticated;\n\n-- Before production: enforce proposal status transitions in a trusted server function,
 -- review role onboarding, add anti-spam controls and moderation.
