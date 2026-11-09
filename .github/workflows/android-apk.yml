@@ -9,6 +9,9 @@ on:
       - 'capacitor.config.json'
       - 'scripts/prepare-mobile.mjs'
       - 'scripts/generate-android-icon.py'
+      - 'scripts/configure-android-oauth.py'
+      - 'supabase-app.js'
+      - 'index.html'
       - 'profi-logo.png'
       - '.github/workflows/android-apk.yml'
 
