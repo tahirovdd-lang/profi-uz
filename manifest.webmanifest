@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Profi.UZ — услуги и специалисты",
+  "short_name": "Profi.UZ",
+  "description": "Поиск специалистов, заказы и междугородний транспорт в Узбекистане",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "./profi-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
