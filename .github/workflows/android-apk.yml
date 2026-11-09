@@ -8,6 +8,8 @@ on:
       - 'package.json'
       - 'capacitor.config.json'
       - 'scripts/prepare-mobile.mjs'
+      - 'scripts/generate-android-icon.py'
+      - 'profi-logo.png'
       - '.github/workflows/android-apk.yml'
 
 permissions:
@@ -15,7 +17,7 @@ permissions:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout source
@@ -25,12 +27,15 @@ jobs:
         with:
           node-version: '22'
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Configure Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Prepare mobile web assets
@@ -39,6 +44,10 @@ jobs:
         run: npx cap add android
       - name: Sync Android project
         run: npx cap sync android
+      - name: Create branded Android icon
+        run: |
+          python3 -m pip install --user Pillow
+          python3 scripts/generate-android-icon.py
       - name: Build test APK
         working-directory: android
         run: bash ./gradlew assembleDebug --no-daemon
