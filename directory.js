@@ -1,6 +1,6 @@
 (()=>{"use strict";
 const root=document.getElementById("proDirectory");if(!root||!window.PROFI_SUPABASE||!window.supabase)return;
-const cfg=window.PROFI_SUPABASE,db=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+const cfg=window.PROFI_SUPABASE,db=window.PROFI_DB;
 const $=id=>document.getElementById(id), langs=["ru","uz","tj"],i=()=>Math.max(0,langs.indexOf(localStorage.getItem("profi_lang")||"ru"));
 const tr=(ru,uz,tj)=>[ru,uz,tj][i()];
 const catalog=()=>window.PROFI_SERVICE_CATALOG||[];
