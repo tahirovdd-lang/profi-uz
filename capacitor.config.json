@@ -1,0 +1,13 @@
+{
+  "appId": "uz.profiuz.app",
+  "appName": "Profi.UZ",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
