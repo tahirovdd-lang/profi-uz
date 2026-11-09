@@ -28,12 +28,30 @@ let editorRequest=0;async function showEditor(){const request=++editorRequest,ed
 $("profileAvatarFile").onchange=()=>{const file=$("profileAvatarFile").files[0];if(!file)return;const url=URL.createObjectURL(file);preview("avatarPreview",[url]);setTimeout(()=>URL.revokeObjectURL(url),60000)};
 $("portfolioFiles").onchange=()=>{const files=[...$("portfolioFiles").files];uploadStatus(files.length+savedPortfolio.length>8?tr("Не более 8 фотографий","8 tadan oshmasin","На бештар аз 8 акс"):tr("Выбрано новых фото: ","Yangi rasmlar: ","Аксҳои нав: ")+files.length)};
 $("clearPortfolio").onclick=()=>{savedPortfolio=[];preview("portfolioPreview",[],true);uploadStatus(tr("Фотографии будут удалены из профиля после сохранения","Rasmlar saqlangandan keyin profildan o‘chadi","Аксҳо пас аз нигоҳдорӣ аз профил нест мешаванд"))};
-async function showReviewForm(){const {data:{user}}=await db.auth.getUser();if(!user){$("reviewOrders").replaceChildren();return}const {data,error}=await db.from("orders").select("id,description,status,proposals(id,specialist_id,status)").eq("client_id",user.id).eq("status","completed");if(error)return;const {data:reviewed}=await db.from("specialist_reviews").select("order_id").in("order_id",(data||[]).map(o=>o.id).concat(["00000000-0000-0000-0000-000000000000"]));const done=new Set((reviewed||[]).map(r=>r.order_id));const select=$("reviewOrders");select.replaceChildren();option(select,"",tr("Выберите завершённый заказ","Yakunlangan buyurtmani tanlang","Фармоиши анҷомшударо интихоб кунед"));(data||[]).filter(o=>o.proposals?.some(p=>p.status==="accepted")&&!done.has(o.id)).forEach(o=>option(select,o.id,o.description.slice(0,90)))}
+let reviewRequest=0;
+async function showReviewForm(){
+ const request=++reviewRequest,form=$("reviewForm"),select=$("reviewOrders");
+ form.hidden=true;select.replaceChildren();
+ const {data:{user},error:authError}=await db.auth.getUser();
+ if(request!==reviewRequest||authError||!user||sessionStorage.getItem("profi_selected_role")==="specialist")return;
+ const {data,error}=await db.from("orders").select("id,description,status,proposals(id,specialist_id,status)").eq("client_id",user.id).eq("status","completed");
+ if(request!==reviewRequest||error||!data?.length)return;
+ const eligible=data.filter(o=>o.proposals?.some(p=>p.status==="accepted"));
+ if(!eligible.length)return;
+ const {data:reviewed, error:reviewError}=await db.from("specialist_reviews").select("order_id").in("order_id",eligible.map(o=>o.id));
+ if(request!==reviewRequest||reviewError)return;
+ const done=new Set((reviewed||[]).map(r=>r.order_id));
+ const available=eligible.filter(o=>!done.has(o.id));
+ if(!available.length)return;
+ option(select,"",tr("Выберите завершённый заказ","Yakunlangan buyurtmani tanlang","Фармоиши анҷомшударо интихоб кунед"));
+ available.forEach(o=>option(select,o.id,o.description.slice(0,90)));
+ form.hidden=false;
+}
 async function submitReview(e){e.preventDefault();const {error}=await db.rpc("submit_specialist_review",{p_order_id:$("reviewOrders").value,p_rating:Number($("reviewRating").value),p_body:$("reviewBody").value.trim()});status(error?error.message:tr("Отзыв опубликован","Sharh e’lon qilindi","Шарҳ нашр шуд"));if(!error){$("reviewBody").value="";showReviewForm();load()}}
 function labels(){$("directoryTitle").textContent=tr("Найти специалиста","Mutaxassis topish","Ёфтани мутахассис");$("directoryCityLabel").textContent=tr("Город","Shahar","Шаҳр");$("directoryCategoryLabel").textContent=tr("Категория","Toifa","Категория");$("directoryServiceLabel").textContent=tr("Услуга","Xizmat","Хизмат");$("directorySearch").textContent=tr("Найти","Qidirish","Ҷустуҷӯ");$("publicProfileTitle").textContent=tr("Моё портфолио","Mening portfoliom","Портфолиои ман");$("avatarUploadLabel").textContent=tr("Фото профиля (JPG, PNG, WebP)","Profil rasmi (JPG, PNG, WebP)","Акси профил (JPG, PNG, WebP)");$("portfolioUploadLabel").textContent=tr("Добавить фотографии работ (до 8)","Ishlar rasmlarini qo‘shish (8 tagacha)","Иловаи аксҳои кор (то 8)");$("clearPortfolio").textContent=tr("Удалить все фото работ","Barcha ish rasmlarini o‘chirish","Нест кардани ҳамаи аксҳои кор");$("profileSave").textContent=tr("Сохранить профиль","Profilni saqlash","Нигоҳ доштани профил");$("reviewTitle").textContent=tr("Оставить отзыв после работы","Ishdan keyin sharh qoldirish","Пас аз кор шарҳ гузоред");$("reviewSend").textContent=tr("Опубликовать отзыв","Sharhni yuborish","Нашри шарҳ");renderFilters()}
 $("directoryCategory").onchange=()=>{renderFilters();load()};$("directoryCity").onchange=load;$("directoryService").onchange=load;$("directorySearch").onclick=load;$("publicProfileEditor").onsubmit=saveProfile;$("reviewForm").onsubmit=submitReview;
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{labels();load();if(activeProfile&&$("specialistDialog").open)openProfile(activeProfile)}));
 db.auth.onAuthStateChange(()=>{setTimeout(()=>{showEditor();showReviewForm()},100)});
-window.addEventListener("profi:role-selected",()=>{showEditor()});window.addEventListener("profi:profile-updated",()=>{showEditor()});
+window.addEventListener("profi:role-selected",()=>{showEditor();showReviewForm()});window.addEventListener("profi:profile-updated",()=>{showEditor();showReviewForm()});
 labels();load();showEditor();showReviewForm();
 })();
