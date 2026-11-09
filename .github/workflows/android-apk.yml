@@ -42,6 +42,9 @@ jobs:
         run: npm run mobile:prepare
       - name: Generate Android project
         run: npx cap add android
+      - name: Register Android OAuth callback
+        run: |
+          python3 scripts/configure-android-oauth.py
       - name: Sync Android project
         run: npx cap sync android
       - name: Create branded Android icon
