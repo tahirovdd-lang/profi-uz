@@ -116,7 +116,24 @@ $("proMode").onclick=()=>{sessionStorage.setItem("profi_selected_role","speciali
 $("proCategory").addEventListener("change",fillProServices);$("liveCategory").addEventListener("change",fillOrderServices);$("proEdit").onclick=()=>{editingPro=!editingPro;render();if(editingPro)$("proRegistration").scrollIntoView({behavior:"smooth",block:"center"})};
 $("proRegistration").onsubmit=async e=>{e.preventDefault();const chosen=[...$("proServices").querySelectorAll("input:checked")].map(x=>x.value);if(!chosen.length)return msg(servicesText[lang()][3],true);const btn=$("savePro");btn.disabled=true;const {error}=await db.rpc("register_as_specialist",{p_name:fullName()||$("proName").value.trim(),p_category:$("proCategory").value,p_bio:$("proBio").value.trim(),p_phone:$("proPhone").value.trim(),p_city:$("proCity").value,p_services:chosen});btn.disabled=false;if(error)return fail(error);sessionStorage.setItem("profi_selected_role","specialist");view="specialist";editingPro=false;msg(t().profileSaved);await refresh()};
 $("liveOrderForm").onsubmit=async e=>{e.preventDefault();if(!user||needsName())return msg(t().need,true);if(view!=="client"||chosenRole()!=="client"||isBlocked())return;const description=$("liveDescription").value.trim();if(description.length<5)return;const btn=$("livePost");btn.disabled=true;const {error}=await db.from("orders").insert({client_id:user.id,category:$("liveCategory").value,description,service_key:$("liveService").value,city:window.PROFI_LOCATION?.getCity()||"Samarkand"});btn.disabled=false;if(error)fail(error);else{$("liveDescription").value="";msg(t().created);loadOrders();window.dispatchEvent(new Event("profi:orders-updated"))}};
-db.auth.getSession().then(({data,error})=>{if(error){fail(error);console.warn("Profi.UZ: initial session restore",error.message)}user=data?.session?.user||null;if(user){verifySavedSession();refresh()}else{render();if(nativeAuth())window.PROFI_AUTH_STORAGE?.getItem(window.PROFI_AUTH_STORAGE_KEY).then(saved=>{if(saved)sessionIssue("Android: SAVED_SESSION_NOT_RESTORED");else if(window.PROFI_AUTH_STORAGE_ERROR)sessionIssue("Android: "+window.PROFI_AUTH_STORAGE_ERROR)}).catch(console.warn)}const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}});
+(async()=>{
+ let {data,error}=await db.auth.getSession();
+ if(error)console.warn("Profi.UZ: initial session restore",error.message);
+ if(!data?.session&&nativeAuth()){
+  // Recover a valid refresh token from durable native storage after Android process restart.
+  try{
+   const raw=await window.PROFI_AUTH_STORAGE?.getItem(window.PROFI_AUTH_STORAGE_KEY);
+   const saved=raw?JSON.parse(raw):null;
+   if(saved?.refresh_token&&saved?.access_token){
+    const restored=await db.auth.setSession({access_token:saved.access_token,refresh_token:saved.refresh_token});
+    if(restored.error)sessionIssue("Android: SESSION_RESTORE_FAILED "+restored.error.message);
+    else data={session:restored.data.session};
+   }else if(window.PROFI_AUTH_STORAGE_ERROR)sessionIssue("Android: "+window.PROFI_AUTH_STORAGE_ERROR);
+  }catch(e){sessionIssue("Android: SESSION_RESTORE_EXCEPTION "+e.message)}
+ }
+ user=data?.session?.user||null;
+ if(user){await verifySavedSession();await refresh()}else render();const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}
+})().catch(e=>sessionIssue("Android: STARTUP_ERROR "+e.message));
 }
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();initNativeAuth().catch(console.error);
 })();
