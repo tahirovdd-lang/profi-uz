@@ -3,7 +3,7 @@
 "use strict";
 const $=id=>document.getElementById(id),cfg=window.PROFI_SUPABASE;
 if(!$("chatApp")||!window.supabase?.createClient||!cfg?.publishableKey)return;
-const db=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const db=window.PROFI_DB;
 const lang=()=>localStorage.getItem("profi_lang")||"ru";
 const strings={
 ru:{title:"Сообщения",hint:"Переписка доступна после выбора исполнителя.",none:"Активных чатов пока нет.",send:"Отправить",placeholder:"Напишите сообщение...",refresh:"Обновить",close:"Закрыть",load:"Загрузка...",fail:"Ошибка",login:"Войдите, чтобы увидеть чаты",person:"Собеседник",readOnly:"Заказ завершён. История доступна только для чтения.",name:"Заказ",new:"Обновить список чатов"},
