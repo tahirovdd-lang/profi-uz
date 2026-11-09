@@ -48,7 +48,36 @@ const socialLabels={ru:["Войти или зарегистрироваться"
 const updateSocialLabels=()=>{const x=socialLabels[lang()]||socialLabels.ru;["socialAuthTitle","googleLoginText","appleLoginText"].forEach((id,i)=>{$(id).textContent=x[i]})};
 document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",()=>setTimeout(updateSocialLabels,0)));
 document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",()=>setTimeout(updateHeaderWelcome,0)));updateSocialLabels();
-const socialSignIn=async(provider)=>{const btn=$(provider==="google"?"googleLogin":"appleLogin");btn.disabled=true;const status=$("socialAuthStatus");status.textContent="";try{const {data,error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname,skipBrowserRedirect:false}});if(error)throw error;if(!data?.url)throw Error("OAuth redirect URL unavailable")}catch(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543";btn.disabled=false}};
+const nativeAuth=()=>window.Capacitor?.isNativePlatform?.()===true;
+const nativeRedirect="uz.profiuz.app://auth/callback";
+let nativeAuthListener=null;
+async function handleNativeAuthUrl(value){
+ if(!nativeAuth()||!value?.startsWith(nativeRedirect))return;
+ const url=new URL(value);
+ const code=url.searchParams.get("code");
+ const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");
+ const status=$("socialAuthStatus");
+ if(oauthError){status.textContent=decodeURIComponent(oauthError);status.style.color="#bd2543";return}
+ if(!code)return;
+ const {error}=await db.auth.exchangeCodeForSession(code);
+ if(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543"}
+ else{status.textContent="";await refresh()}
+ try{await window.Capacitor?.Plugins?.Browser?.close()}catch(_){}
+}
+async function initNativeAuth(){
+ if(!nativeAuth())return;
+ const app=window.Capacitor?.Plugins?.App;
+ if(!app)return;
+ nativeAuthListener=await app.addListener("appUrlOpen",event=>handleNativeAuthUrl(event.url));
+ const launch=await app.getLaunchUrl();
+ if(launch?.url)await handleNativeAuthUrl(launch.url);
+}
+const socialSignIn=async(provider)=>{const btn=$(provider==="google"?"googleLogin":"appleLogin");btn.disabled=true;const status=$("socialAuthStatus");status.textContent="";try{
+ const isNative=nativeAuth();
+ const {data,error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:isNative?nativeRedirect:location.origin+location.pathname,skipBrowserRedirect:isNative}});
+ if(error)throw error;if(!data?.url)throw Error("OAuth redirect URL unavailable");
+ if(isNative){const browser=window.Capacitor?.Plugins?.Browser;if(!browser)throw Error("Android Browser plugin unavailable");await browser.open({url:data.url,windowName:"_self"})}
+}catch(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543"}finally{btn.disabled=false}};
 $("googleLogin").onclick=()=>socialSignIn("google");
 $("appleLogin").onclick=()=>socialSignIn("apple");
 const authValues=()=>({email:$("liveEmail").value.trim(),password:$("livePassword").value});
@@ -65,5 +94,5 @@ $("proRegistration").onsubmit=async e=>{e.preventDefault();const chosen=[...$("p
 $("liveOrderForm").onsubmit=async e=>{e.preventDefault();if(!user||needsName())return msg(t().need,true);if(view!=="client"||chosenRole()!=="client"||isBlocked())return;const description=$("liveDescription").value.trim();if(description.length<5)return;const btn=$("livePost");btn.disabled=true;const {error}=await db.from("orders").insert({client_id:user.id,category:$("liveCategory").value,description,service_key:$("liveService").value,city:window.PROFI_LOCATION?.getCity()||"Samarkand"});btn.disabled=false;if(error)fail(error);else{$("liveDescription").value="";msg(t().created);loadOrders();window.dispatchEvent(new Event("profi:orders-updated"))}};
 db.auth.getSession().then(({data,error})=>{if(error)fail(error);user=data?.session?.user||null;if(user)refresh();else render();const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}});
 }
-document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();initNativeAuth().catch(console.error);
 })();
