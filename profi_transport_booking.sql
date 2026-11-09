@@ -12,6 +12,7 @@ create index if not exists transport_bookings_ride_idx on public.profi_transport
 create index if not exists transport_bookings_passenger_idx on public.profi_transport_bookings(passenger_id);
 alter table public.profi_transport_bookings enable row level security;
 grant select on public.profi_transport_bookings to authenticated;
+drop policy if exists transport_booking_participants_read on public.profi_transport_bookings;
 create policy transport_booking_participants_read on public.profi_transport_bookings for select to authenticated using(passenger_id=(select auth.uid()) or exists(select 1 from public.profi_transport t where t.id=ride_id and t.user_id=(select auth.uid())));
 create table if not exists public.profi_transport_ratings(
  booking_id uuid primary key references public.profi_transport_bookings(id) on delete cascade,
@@ -23,6 +24,7 @@ create table if not exists public.profi_transport_ratings(
 );
 alter table public.profi_transport_ratings enable row level security;
 grant select on public.profi_transport_ratings to anon,authenticated;
+drop policy if exists transport_ratings_public_read on public.profi_transport_ratings;
 create policy transport_ratings_public_read on public.profi_transport_ratings for select to anon,authenticated using(true);
 
 create or replace function public.profi_transport_book(p_ride uuid,p_seats integer)
