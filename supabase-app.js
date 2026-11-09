@@ -59,6 +59,21 @@ document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener
 document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",()=>setTimeout(updateHeaderWelcome,0)));updateSocialLabels();
 const nativeAuth=()=>window.Capacitor?.isNativePlatform?.()===true;
 const nativeRedirect="uz.profiuz.app://auth/callback";
+const sessionIssue=message=>{
+ const status=$("socialAuthStatus");
+ if(status){status.hidden=false;status.textContent=message;status.style.color="#bd2543"}
+ console.warn("Profi.UZ session:",message);
+};
+async function verifySavedSession(){
+ if(!nativeAuth())return true;
+ try{
+  const saved=await window.PROFI_AUTH_STORAGE?.getItem(window.PROFI_AUTH_STORAGE_KEY);
+  if(!saved){sessionIssue("Android не сохранил вход. Сообщите разработчику: STORAGE_EMPTY"+(window.PROFI_AUTH_STORAGE_ERROR?" / "+window.PROFI_AUTH_STORAGE_ERROR:""));return false}
+  const parsed=JSON.parse(saved);
+  if(!parsed?.refresh_token){sessionIssue("Android: SESSION_NO_REFRESH_TOKEN");return false}
+  return true;
+ }catch(e){sessionIssue("Android: STORAGE_CHECK_FAILED "+e.message);return false}
+}
 let nativeAuthListener=null;
 async function handleNativeAuthUrl(value){
  if(!nativeAuth()||!value?.startsWith(nativeRedirect))return;
@@ -70,7 +85,7 @@ async function handleNativeAuthUrl(value){
  if(!code)return;
  const {error}=await db.auth.exchangeCodeForSession(code);
  if(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543"}
- else{status.textContent="";const {data:confirmed}=await db.auth.getSession();if(confirmed?.session?.user){user=confirmed.session.user;await refresh()}else status.textContent="Не удалось сохранить сессию. Попробуйте войти ещё раз."}
+ else{status.textContent="";const {data:confirmed}=await db.auth.getSession();if(confirmed?.session?.user){user=confirmed.session.user;await verifySavedSession();await refresh()}else sessionIssue("Android: SESSION_NOT_CREATED")}
  try{await window.Capacitor?.Plugins?.Browser?.close()}catch(_){}
 }
 async function initNativeAuth(){
@@ -101,7 +116,7 @@ $("proMode").onclick=()=>{sessionStorage.setItem("profi_selected_role","speciali
 $("proCategory").addEventListener("change",fillProServices);$("liveCategory").addEventListener("change",fillOrderServices);$("proEdit").onclick=()=>{editingPro=!editingPro;render();if(editingPro)$("proRegistration").scrollIntoView({behavior:"smooth",block:"center"})};
 $("proRegistration").onsubmit=async e=>{e.preventDefault();const chosen=[...$("proServices").querySelectorAll("input:checked")].map(x=>x.value);if(!chosen.length)return msg(servicesText[lang()][3],true);const btn=$("savePro");btn.disabled=true;const {error}=await db.rpc("register_as_specialist",{p_name:fullName()||$("proName").value.trim(),p_category:$("proCategory").value,p_bio:$("proBio").value.trim(),p_phone:$("proPhone").value.trim(),p_city:$("proCity").value,p_services:chosen});btn.disabled=false;if(error)return fail(error);sessionStorage.setItem("profi_selected_role","specialist");view="specialist";editingPro=false;msg(t().profileSaved);await refresh()};
 $("liveOrderForm").onsubmit=async e=>{e.preventDefault();if(!user||needsName())return msg(t().need,true);if(view!=="client"||chosenRole()!=="client"||isBlocked())return;const description=$("liveDescription").value.trim();if(description.length<5)return;const btn=$("livePost");btn.disabled=true;const {error}=await db.from("orders").insert({client_id:user.id,category:$("liveCategory").value,description,service_key:$("liveService").value,city:window.PROFI_LOCATION?.getCity()||"Samarkand"});btn.disabled=false;if(error)fail(error);else{$("liveDescription").value="";msg(t().created);loadOrders();window.dispatchEvent(new Event("profi:orders-updated"))}};
-db.auth.getSession().then(({data,error})=>{if(error){fail(error);console.warn("Profi.UZ: initial session restore",error.message)}user=data?.session?.user||null;if(user)refresh();else render();const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}});
+db.auth.getSession().then(({data,error})=>{if(error){fail(error);console.warn("Profi.UZ: initial session restore",error.message)}user=data?.session?.user||null;if(user){verifySavedSession();refresh()}else{render();if(nativeAuth())window.PROFI_AUTH_STORAGE?.getItem(window.PROFI_AUTH_STORAGE_KEY).then(saved=>{if(saved)sessionIssue("Android: SAVED_SESSION_NOT_RESTORED");else if(window.PROFI_AUTH_STORAGE_ERROR)sessionIssue("Android: "+window.PROFI_AUTH_STORAGE_ERROR)}).catch(console.warn)}const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}});
 }
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();initNativeAuth().catch(console.error);
 })();
