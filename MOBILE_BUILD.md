@@ -29,3 +29,13 @@ Capacitor app ID: `uz.profiuz.app`. Confirm ownership and final bundle identifie
 - Native packages should be tested on real Android/iPhone hardware before release.
 
 Do not claim native apps are published or push works until verified.
+
+## Automatic Android test APK via GitHub Actions
+1. Open https://github.com/tahirovdd-lang/profi-uz/actions/workflows/android-apk.yml
+2. Select **Run workflow** on the main branch (or inspect the run triggered by a build-config commit).
+3. Wait for **Build test APK** and **Upload installable APK** to succeed.
+4. Open the successful workflow run and download artifact **ProfiUZ-Android-Test-APK**.
+5. Unzip the artifact and transfer **app-debug.apk** to an Android phone; install it after approving the device's install prompt.
+6. Test registration/login, orders, proposals, chats, file uploads, intercity transport, and the Android Back button. Report errors/screenshots.
+
+This debug APK is signed with Android's temporary debug key. It is **not** a Google Play release. The Android app must not be considered production-ready until Supabase auth/deep links, mobile permissions, and RLS security are verified. Android's installation warning for unknown sources is expected for a test APK; only install your own verified build.
