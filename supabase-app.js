@@ -135,13 +135,12 @@ const socialSignIn=async(provider)=>{
   if(!isNative)status.textContent="";
   else status.textContent="Завершите вход через Google в открывшемся браузере.";
  }catch(error){
-  status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Повторите вход через Google.";
+  status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Повторите вход.";
   status.style.color="#bd2543";
   console.error("Profi.UZ OAuth",provider,error);
  }finally{btn.disabled=false}
 };
-// Keep registration Google-only in the Android application.
-// The email/password form stays hidden, matching the website.
+// Only Google and Apple sign-in are presented. Email/password and SMS stay hidden.
 if(nativeAuth()){
  const emailForm=$("liveLogin");
  if(emailForm){emailForm.style.removeProperty("display");emailForm.hidden=true;}
