@@ -31,4 +31,19 @@ for folder_name in ("mipmap-anydpi-v26", "mipmap-anydpi"):
     if folder.exists():
         for file in folder.glob("ic_launcher*.xml"):
             file.unlink()
-print("Android launcher icon matches profi-icon.svg")
+# Replace Capacitor's default white splash with the verified Profi.UZ brand mark.
+# Android 12+ system splash uses the launcher icon; older Android uses splash.png.
+from PIL import ImageOps
+for folder_name in ("drawable", "drawable-land-hdpi", "drawable-land-mdpi",
+                    "drawable-land-xhdpi", "drawable-land-xxhdpi", "drawable-land-xxxhdpi",
+                    "drawable-port-hdpi", "drawable-port-mdpi", "drawable-port-xhdpi",
+                    "drawable-port-xxhdpi", "drawable-port-xxxhdpi"):
+    folder = res / folder_name
+    splash = folder / "splash.png"
+    if splash.exists():
+        width, height = Image.open(splash).size
+        tile = Image.new("RGBA", (width, height), "#ffffff")
+        mark = ImageOps.contain(icon, (int(min(width,height)*0.28), int(min(width,height)*0.28)), Image.Resampling.LANCZOS)
+        tile.alpha_composite(mark, ((width-mark.width)//2, (height-mark.height)//2))
+        tile.convert("RGB").save(splash)
+print("Android launcher and splash match profi-icon.svg")
