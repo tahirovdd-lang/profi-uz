@@ -120,15 +120,22 @@ const socialSignIn=async(provider)=>{
   if(result.error)throw result.error;
   if(!result.data?.url)throw Error("OAuth redirect URL unavailable");
   if(isNative){
+   // Google disallows embedded WebView login. Use Android ACTION_VIEW to launch
+   // the installed browser, then return through the registered app deep link.
+   const launcher=window.Capacitor?.Plugins?.AppLauncher;
    const browser=window.Capacitor?.Plugins?.Browser;
-   if(!browser?.open)throw Error("Android Browser plugin unavailable");
    status.textContent="Открываем Google в браузере…";
-   await authTimeout(browser.open({url:result.data.url,windowName:"_blank"}),12000,"BROWSER_OPEN");
+   if(launcher?.openUrl){
+    const opened=await authTimeout(launcher.openUrl({url:result.data.url}),12000,"ANDROID_BROWSER_LAUNCH");
+    if(opened?.completed===false)throw Error("Android browser could not open Google login");
+   }else if(browser?.open){
+    await authTimeout(browser.open({url:result.data.url}),12000,"BROWSER_OPEN");
+   }else throw Error("Android browser launcher unavailable");
   }
   if(!isNative)status.textContent="";
   else status.textContent="Завершите вход через Google в открывшемся браузере.";
  }catch(error){
-  status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Попробуйте ещё раз или войдите по email.";
+  status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Повторите вход через Google.";
   status.style.color="#bd2543";
   console.error("Profi.UZ OAuth",provider,error);
  }finally{btn.disabled=false}
@@ -140,8 +147,6 @@ if(nativeAuth()){
  if(emailForm){emailForm.style.removeProperty("display");emailForm.hidden=true;}
  const emailSection=$("smsAuth");
  if(emailSection)emailSection.hidden=true;
- const appleButton=$("appleLogin");
- if(appleButton)appleButton.hidden=true;
 }
 $("googleLogin").onclick=()=>socialSignIn("google");
 $("appleLogin").onclick=()=>socialSignIn("apple");
