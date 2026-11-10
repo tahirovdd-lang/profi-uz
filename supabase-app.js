@@ -96,12 +96,39 @@ async function initNativeAuth(){
  const launch=await app.getLaunchUrl();
  if(launch?.url)await handleNativeAuthUrl(launch.url);
 }
-const socialSignIn=async(provider)=>{const btn=$(provider==="google"?"googleLogin":"appleLogin");btn.disabled=true;const status=$("socialAuthStatus");status.textContent="";try{
- const isNative=nativeAuth();
- const {data,error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:isNative?nativeRedirect:location.origin+location.pathname,skipBrowserRedirect:isNative}});
- if(error)throw error;if(!data?.url)throw Error("OAuth redirect URL unavailable");
- if(isNative){const browser=window.Capacitor?.Plugins?.Browser;if(!browser)throw Error("Android Browser plugin unavailable");await browser.open({url:data.url,windowName:"_self"})}
-}catch(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543"}finally{btn.disabled=false}};
+// A stalled OAuth plugin must never lock the sign-in screen indefinitely.
+const authTimeout=(promise,ms,stage)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(stage+" timeout ("+Math.round(ms/1000)+"s)")),ms))]);
+const socialSignIn=async(provider)=>{
+ const btn=$(provider==="google"?"googleLogin":"appleLogin");
+ if(btn.disabled)return;
+ btn.disabled=true;
+ const status=$("socialAuthStatus");
+ status.textContent=({ru:"Открываем вход…",uz:"Kirish ochilmoqda…",tj:"Воридшавӣ кушода мешавад…"})[lang()]||"Открываем вход…";
+ status.style.color="#697589";
+ try{
+  const isNative=nativeAuth();
+  const result=await authTimeout(db.auth.signInWithOAuth({provider,options:{redirectTo:isNative?nativeRedirect:location.origin+location.pathname,skipBrowserRedirect:isNative}}),15000,"OAUTH_START");
+  if(result.error)throw result.error;
+  if(!result.data?.url)throw Error("OAuth redirect URL unavailable");
+  if(isNative){
+   const browser=window.Capacitor?.Plugins?.Browser;
+   if(!browser?.open)throw Error("Android Browser plugin unavailable");
+   await authTimeout(browser.open({url:result.data.url}),12000,"BROWSER_OPEN");
+  }
+  status.textContent="";
+ }catch(error){
+  status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Попробуйте ещё раз или войдите по email.";
+  status.style.color="#bd2543";
+  console.error("Profi.UZ OAuth",provider,error);
+ }finally{btn.disabled=false}
+};
+// Native users must have an alternative when Google/Apple OAuth is unavailable.
+if(nativeAuth()){
+ const emailForm=$("liveLogin");
+ if(emailForm){emailForm.style.setProperty("display","block","important");emailForm.hidden=false;}
+ const emailSection=$("smsAuth");
+ if(emailSection)emailSection.hidden=true;
+}
 $("googleLogin").onclick=()=>socialSignIn("google");
 $("appleLogin").onclick=()=>socialSignIn("apple");
 const authValues=()=>({email:$("liveEmail").value.trim(),password:$("livePassword").value});
