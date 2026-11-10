@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "announcement": {
+    "enabled": false,
+    "ru": "",
+    "uz": "",
+    "tj": ""
+  },
+  "features": {
+    "transport": true,
+    "directory": true
+  },
+  "android": {
+    "minimumVersionCode": 1,
+    "latestVersionCode": 1,
+    "downloadUrl": "https://github.com/tahirovdd-lang/profi-uz/actions/workflows/android-apk.yml"
+  }
+}
