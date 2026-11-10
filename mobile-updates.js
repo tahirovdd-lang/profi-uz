@@ -1,49 +1,59 @@
-/* Server-managed mobile content and feature switches. No remote JavaScript execution. */
+/* Profi.UZ server-controlled announcements and store update notices; never downloads executable code. */
 (function(){
- "use strict";
- const endpoint="https://profiuz.uz/mobile-config.json";
- const native=()=>window.Capacitor?.isNativePlatform?.()===true;
- let latest=null;
- function lang(){return document.documentElement.lang?.slice(0,2)||"ru"}
- function render(config){
-  if(!native()||!config||config.schema!==1)return;
-  latest=config;
-  const bannerId="profiMobileAnnouncement";
-  let banner=document.getElementById(bannerId);
-  if(!banner){banner=document.createElement("div");banner.id=bannerId;banner.setAttribute("role","status");banner.style.cssText="padding:12px 16px;margin:10px auto;max-width:1080px;border-radius:12px;background:#edf4ff;color:#183d78;font-weight:600";document.body.prepend(banner)}
-  const announcement=config.announcement||{};
-  banner.hidden=!announcement.enabled;
-  if(announcement.enabled)banner.textContent=announcement[lang()]||announcement.ru||"";
-  const features=config.features||{};
-  // Feature switches affect only explicitly supported UI sections.
-  for(const [key,id] of Object.entries({transport:"transportApp"})){
-   const element=document.getElementById(id);
-   if(element&&typeof features[key]==="boolean")element.hidden=!features[key];
-  }
-  const latestCode=Number(config.android?.latestVersionCode);
-  const currentCode=Number(window.PROFI_ANDROID_VERSION_CODE||1);
-  let update=document.getElementById("profiMobileUpdate");
-  if(!update){update=document.createElement("div");update.id="profiMobileUpdate";update.style.cssText="padding:10px 16px;text-align:center;background:#fff4dc;color:#704700";document.body.prepend(update)}
-  update.hidden=!(latestCode>currentCode);
-  if(!update.hidden){
-   update.replaceChildren(document.createTextNode(lang()==="uz"?"Profi.UZ yangilanishi mavjud. ":lang()==="tj"?"Навсозии Profi.UZ дастрас аст. ":"Доступно обновление Profi.UZ. "));
-   const a=document.createElement("a");
-   a.href=config.android.downloadUrl||"https://github.com/tahirovdd-lang/profi-uz/actions/workflows/android-apk.yml";
-   a.textContent=lang()==="uz"?"Yangilash":lang()==="tj"?"Навсозӣ":"Обновить";
-   a.target="_blank";a.rel="noopener noreferrer";
-   update.append(a);
-  }
+"use strict";
+const endpoint="https://profiuz.uz/mobile-config.json";
+const cap=()=>window.Capacitor;
+const platform=()=>cap()?.getPlatform?.()||"web";
+const native=()=>cap()?.isNativePlatform?.()===true;
+let latest=null,installed=null;
+const lang=()=>localStorage.getItem("profi_lang")||"ru";
+const translate=(ru,uz,tj)=>({ru,uz,tj})[lang()]||ru;
+async function installedBuild(){
+ if(installed!==null)return installed;
+ try{const info=await cap()?.Plugins?.App?.getInfo?.();installed=Number(info?.build)||0}
+ catch(e){console.warn("Profi.UZ version check:",e);installed=0}
+ return installed;
+}
+function message(id,css){
+ let node=document.getElementById(id);
+ if(!node){node=document.createElement("div");node.id=id;node.style.cssText=css;document.body.prepend(node)}
+ return node;
+}
+async function render(config){
+ if(!native()||!config||config.schema!==1)return;
+ latest=config;
+ const a=config.announcement||{};
+ const banner=message("profiMobileAnnouncement","padding:12px 16px;margin:10px auto;max-width:1080px;border-radius:12px;background:#edf4ff;color:#183d78;font-weight:600");
+ banner.hidden=!a.enabled;
+ banner.textContent=a.enabled?(a[lang()]||a.ru||""):"";
+ // Never override the active navigation state: a disabled feature is checked by its entry point.
+ const os=platform();
+ const policy=config[os]||{};
+ const current=await installedBuild();
+ const newest=Number(policy.latestVersionCode)||0;
+ const minimum=Number(policy.minimumVersionCode)||0;
+ const url=typeof policy.downloadUrl==="string"&&/^https:\/\//.test(policy.downloadUrl)?policy.downloadUrl:"";
+ const update=message("profiMobileUpdate","padding:12px 16px;text-align:center;background:#fff4dc;color:#704700");
+ update.hidden=!(current>0&&newest>current&&url);
+ update.replaceChildren();
+ if(!update.hidden){
+  const required=minimum>current;
+  update.append(document.createTextNode(required?translate("Для продолжения работы обновите Profi.UZ. ","Profi.UZ ilovasini yangilang. ","Profi.UZ-ро навсозӣ кунед. "):translate("Доступна новая версия Profi.UZ. ","Profi.UZ yangilanishi mavjud. ","Навсозии Profi.UZ дастрас аст. ")));
+  const link=document.createElement("a");
+  link.href=url;link.target="_blank";link.rel="noopener noreferrer";
+  link.textContent=translate("Открыть обновление","Yangilash","Навсозӣ");
+  update.append(link);
  }
- async function refresh(){
-  if(!native())return;
-  try{
-   const response=await fetch(endpoint+"?t="+Date.now(),{cache:"no-store"});
-   if(!response.ok)throw Error("HTTP "+response.status);
-   const config=await response.json();
-   render(config);
-  }catch(error){console.warn("Profi.UZ mobile config unavailable; keeping built-in defaults",error)}
- }
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",refresh,{once:true});else refresh();
- document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
- document.querySelectorAll("[data-lang]").forEach(el=>el.addEventListener("click",()=>{if(latest)setTimeout(()=>render(latest),0)}));
+}
+async function refresh(){
+ if(!native())return;
+ try{
+  const response=await fetch(endpoint+"?t="+Date.now(),{cache:"no-store"});
+  if(!response.ok)throw Error("HTTP "+response.status);
+  await render(await response.json());
+ }catch(e){console.warn("Profi.UZ remote config unavailable",e)}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",refresh,{once:true});else refresh();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
+document.addEventListener("click",e=>{if(e.target.closest?.("[data-lang]")&&latest)setTimeout(()=>render(latest),0)});
 })();
