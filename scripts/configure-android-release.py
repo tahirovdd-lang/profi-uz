@@ -22,8 +22,16 @@ def releaseSigningFile = rootProject.file('release-signing.properties')
 releaseSigningFile.withInputStream { releaseSigningProps.load(it) }
 """
 src=snippet+src
-src=src.replace("signingConfigs {","signingConfigs {\n        release {\n            storeFile file(releaseSigningProps['storeFile'])\n            storePassword releaseSigningProps['storePassword']\n            keyAlias releaseSigningProps['keyAlias']\n            keyPassword releaseSigningProps['keyPassword']\n        }",1)
-if "signingConfigs {" not in src:raise RuntimeError("signingConfigs missing")
+src,n=re.subn(r'android\\s*\\{',"""android {
+    signingConfigs {
+        release {
+            storeFile file(releaseSigningProps['storeFile'])
+            storePassword releaseSigningProps['storePassword']
+            keyAlias releaseSigningProps['keyAlias']
+            keyPassword releaseSigningProps['keyPassword']
+        }
+    }""",src,count=1)
+if n!=1:raise RuntimeError("android block missing")
 src=src.replace("signingConfig signingConfigs.debug","signingConfig signingConfigs.release")
 gradle.write_text(src)
 print(f"Configured signed Android release {version} ({code})")
