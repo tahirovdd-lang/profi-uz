@@ -56,6 +56,21 @@ jobs:
         run: |
           python3 -m pip install --user Pillow CairoSVG
           python3 scripts/generate-android-icon.py
+      - name: Set Android version from package
+        run: |
+          python3 - <<'PY'
+          import json,re,pathlib
+          version=json.loads(pathlib.Path("package.json").read_text())["version"]
+          code=int("".join(f"{int(x):02d}" for x in version.split(".")[:3]))
+          gradle=pathlib.Path("android/app/build.gradle")
+          src=gradle.read_text()
+          src,n=re.subn(r'versionCode\s+\d+',f'versionCode {code}',src,count=1)
+          if n!=1: raise RuntimeError("Android versionCode not found")
+          src,n=re.subn(r'versionName\s+"[^"]+"',f'versionName "{version}"',src,count=1)
+          if n!=1: raise RuntimeError("Android versionName not found")
+          gradle.write_text(src)
+          print("Android version:",version,"build:",code)
+          PY
       - name: Build test APK
         working-directory: android
         run: bash ./gradlew assembleDebug --no-daemon
