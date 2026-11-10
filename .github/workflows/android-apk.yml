@@ -12,6 +12,7 @@ on:
       - 'scripts/configure-android-oauth.py'
       - 'supabase-app.js'
       - 'auth-client.js'
+      - 'mobile-updates.js'
       - 'index.html'
       - 'profi-icon.svg'
       - '.github/workflows/android-apk.yml'
