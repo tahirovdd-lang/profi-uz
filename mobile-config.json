@@ -12,7 +12,12 @@
   },
   "android": {
     "minimumVersionCode": 1,
-    "latestVersionCode": 1,
+    "latestVersionCode": 200,
     "downloadUrl": "https://github.com/tahirovdd-lang/profi-uz/actions/workflows/android-apk.yml"
+  },
+  "ios": {
+    "minimumVersionCode": 1,
+    "latestVersionCode": 1,
+    "downloadUrl": ""
   }
 }
