@@ -122,21 +122,26 @@ const socialSignIn=async(provider)=>{
   if(isNative){
    const browser=window.Capacitor?.Plugins?.Browser;
    if(!browser?.open)throw Error("Android Browser plugin unavailable");
-   await authTimeout(browser.open({url:result.data.url}),12000,"BROWSER_OPEN");
+   status.textContent="Открываем Google в браузере…";
+   await authTimeout(browser.open({url:result.data.url,windowName:"_blank"}),12000,"BROWSER_OPEN");
   }
-  status.textContent="";
+  if(!isNative)status.textContent="";
+  else status.textContent="Завершите вход через Google в открывшемся браузере.";
  }catch(error){
   status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+(error?.message||String(error))+". Попробуйте ещё раз или войдите по email.";
   status.style.color="#bd2543";
   console.error("Profi.UZ OAuth",provider,error);
  }finally{btn.disabled=false}
 };
-// Native users must have an alternative when Google/Apple OAuth is unavailable.
+// Keep registration Google-only in the Android application.
+// The email/password form stays hidden, matching the website.
 if(nativeAuth()){
  const emailForm=$("liveLogin");
- if(emailForm){emailForm.style.setProperty("display","block","important");emailForm.hidden=false;}
+ if(emailForm){emailForm.style.removeProperty("display");emailForm.hidden=true;}
  const emailSection=$("smsAuth");
  if(emailSection)emailSection.hidden=true;
+ const appleButton=$("appleLogin");
+ if(appleButton)appleButton.hidden=true;
 }
 $("googleLogin").onclick=()=>socialSignIn("google");
 $("appleLogin").onclick=()=>socialSignIn("apple");
