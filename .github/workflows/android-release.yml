@@ -1,0 +1,67 @@
+name: Android signed release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check signing configuration
+        run: |
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::Missing GitHub Actions secret: $name"; exit 1; fi
+          done
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Prepare app
+        run: |
+          npm run mobile:prepare
+          npx cap add android
+          python3 scripts/configure-android-oauth.py
+          npx cap sync android
+          python3 -m pip install --user Pillow CairoSVG
+          python3 scripts/generate-android-icon.py
+      - name: Configure signing and version
+        run: python3 scripts/configure-android-release.py
+      - name: Build signed release
+        working-directory: android
+        run: bash ./gradlew assembleRelease --no-daemon
+      - name: Verify APK signature
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+          cp android/app/build/outputs/apk/release/app-release.apk ProfiUZ.apk
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProfiUZ-Signed-Release-APK
+          path: ProfiUZ.apk
+          if-no-files-found: error
+      - name: Publish versioned GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG already exists; bump package.json version before publishing."
+            exit 1
+          fi
+          gh release create "$TAG" ProfiUZ.apk --title "Profi.UZ $TAG" --notes "Signed Android APK. Install over previous signed versions using the same keystore." --latest
