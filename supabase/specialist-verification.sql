@@ -19,7 +19,7 @@ create or replace function public.profi_verification_admin()
 returns boolean language plpgsql security definer set search_path=public as $v1$
 begin
  return auth.uid() is not null and exists(select 1 from public.profi_admins a where a.user_id=auth.uid());
-end $;
+end $v1$;
 revoke all on function public.profi_verification_admin() from public,anon;
 grant execute on function public.profi_verification_admin() to authenticated;
 drop policy if exists profi_verification_admin_read on public.profi_specialist_verifications;
@@ -34,7 +34,7 @@ begin
  values(auth.uid(),'pending','',now(),null,null)
  on conflict(specialist_id) do update set status='pending',note='',requested_at=now(),reviewed_at=null,reviewed_by=null
  where public.profi_specialist_verifications.status='rejected';
-end $v1$;
+end $v2$;
 revoke all on function public.profi_request_verification() from public,anon;
 grant execute on function public.profi_request_verification() to authenticated;
 create or replace function public.profi_admin_list_verifications()
@@ -45,7 +45,7 @@ begin
  return query select v.specialist_id,p.display_name::text,p.category::text,p.city::text,v.status,v.requested_at,v.note
  from public.profi_specialist_verifications v join public.profiles p on p.id=v.specialist_id
  order by case v.status when 'pending' then 0 when 'verified' then 1 else 2 end,v.requested_at desc;
-end $v2$;
+end $v3$;
 revoke all on function public.profi_admin_list_verifications() from public,anon;
 grant execute on function public.profi_admin_list_verifications() to authenticated;
 grant update on public.profi_specialist_verifications to authenticated;
@@ -60,6 +60,6 @@ begin
  update public.profi_specialist_verifications set status=p_status,note=coalesce(p_note,''),reviewed_at=now(),reviewed_by=auth.uid()
  where specialist_id=p_specialist_id and status='pending';
  if not found then raise exception 'Pending request not found'; end if;
-end $v3$;
+end $v4$;
 revoke all on function public.profi_admin_decide_verification(uuid,text,text) from public,anon;
 grant execute on function public.profi_admin_decide_verification(uuid,text,text) to authenticated;
