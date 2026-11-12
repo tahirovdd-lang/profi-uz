@@ -9,6 +9,18 @@ const title=el("h3",tr("Проверка специалистов","Mutaxassisla
 const reload=el("button",tr("Обновить заявки","Arizalarni yangilash","Навсозии дархостҳо"));reload.className="outline";reload.type="button";
 const message=el("p");message.className="msg";message.setAttribute("aria-live","polite");
 const list=el("div");list.className="admin-profiles";section.append(title,reload,message,list);admin.append(section);
+const stats=el("div");stats.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:14px 0";
+section.append(stats);
+async function loadStats(){
+ if(admin.hidden||!db())return;
+ const {data,error}=await db().rpc("profi_admin_order_stats");
+ stats.replaceChildren();
+ if(error){const note=el("p",tr("Статистика недоступна: ","Statistika mavjud emas: ","Омор дастрас нест: ")+error.message);stats.append(note);return}
+ const x=(data||[])[0];if(!x)return;
+ const fields=[["total_orders","Всего заказов","Jami buyurtmalar","Ҳамаи фармоишҳо"],["active_orders","Активные","Faol","Фаъол"],["completed_orders","Завершённые","Yakunlangan","Анҷомшуда"],["cancelled_orders","Отменённые","Bekor qilingan","Бекоршуда"],["total_users","Пользователи","Foydalanuvchilar","Корбарон"],["total_specialists","Специалисты","Mutaxassislar","Мутахассисон"],["verified_specialists","Проверены","Tasdiqlangan","Тасдиқшуда"],["pending_verifications","На проверке","Tekshiruvda","Дар санҷиш"]];
+ for(const [key,ru,uz,tj] of fields){const box=el("div");box.style.cssText="border:1px solid #e5e8f0;border-radius:12px;padding:12px;background:#fff";const value=el("strong",String(x[key]??0));value.style.cssText="display:block;font-size:23px";box.append(value,el("small",tr(ru,uz,tj)));stats.append(box)}
+}
+
 const request=el("div");request.className="dashpanel";request.style.marginTop="16px";request.hidden=true;
 const reqTitle=el("h3",tr("Проверка специалиста","Mutaxassisni tasdiqlash","Тасдиқи мутахассис"));
 const reqText=el("p");const reqButton=el("button",tr("Подать заявку на проверку","Tasdiqlash uchun ariza","Дархост барои тасдиқ"));reqButton.className="outline";reqButton.type="button";
@@ -44,9 +56,9 @@ async function refreshRequest(){
  reqText.textContent=data?.status==="verified"?tr("Профиль подтверждён","Profil tasdiqlangan","Профил тасдиқ шуд"):data?.status==="pending"?tr("Заявка рассматривается","Ariza ko‘rib chiqilmoqda","Дархост баррасӣ мешавад"):data?.status==="rejected"?tr("Отклонено. Можно подать повторно.","Rad etildi. Qayta yuborish mumkin.","Рад шуд. Такроран фиристед."):tr("Подайте заявку для получения статуса «Проверен».","Tasdiqlangan maqomini olish uchun ariza yuboring.","Барои мақоми тасдиқшуда дархост диҳед.");
  reqButton.hidden=data?.status==="pending"||data?.status==="verified";
 }
-reload.onclick=load;
+reload.onclick=()=>{load();loadStats()};
 reqButton.onclick=async()=>{reqButton.disabled=true;const {error}=await db().rpc("profi_request_verification");reqButton.disabled=false;if(error)reqText.textContent=error.message;else await refreshRequest()};
-const observer=new MutationObserver(()=>{if(!admin.hidden)load()});observer.observe(admin,{attributes:true,attributeFilter:["hidden"]});
+const observer=new MutationObserver(()=>{if(!admin.hidden){load();loadStats()}});observer.observe(admin,{attributes:true,attributeFilter:["hidden"]});
 db()?.auth.onAuthStateChange(()=>setTimeout(refreshRequest,200));
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>setTimeout(()=>{title.textContent=tr("Проверка специалистов","Mutaxassislarni tekshirish","Санҷиши мутахассисон");reqTitle.textContent=tr("Проверка специалиста","Mutaxassisni tasdiqlash","Тасдиқи мутахассис");refreshRequest()},50)));
 setTimeout(()=>{refreshRequest();if(!admin.hidden)load()},1200);
