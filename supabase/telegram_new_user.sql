@@ -1,6 +1,6 @@
 -- Send an asynchronous Telegram notification for each new Supabase Auth user.
 -- Store the endpoint URL and shared webhook secret in Supabase Vault before running
--- this script. See supabase/TELEGRAM_SETUP.md.
+-- this script. See supabase/TELEGRAM_SIGNUP_NOTIFICATIONS.md.
 create extension if not exists pg_net;
 
 create or replace function public.notify_telegram_new_auth_user()
