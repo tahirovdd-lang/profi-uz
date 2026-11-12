@@ -16,12 +16,10 @@ create policy profi_verification_public_verified on public.profi_specialist_veri
  for select to anon,authenticated using (status='verified' or specialist_id=(select auth.uid()));
 -- Reuse the existing server-side admin authorization RPC. Never trust client-side role flags.
 create or replace function public.profi_verification_admin()
-returns boolean language plpgsql security invoker set search_path=public as $$
+returns boolean language plpgsql security definer set search_path=public as $$
 begin
- perform public.profi_admin_list_profiles();
- return true;
-exception when others then return false;
-end $$;
+ return auth.uid() is not null and exists(select 1 from public.profi_admins a where a.user_id=auth.uid());
+end $;
 revoke all on function public.profi_verification_admin() from public,anon;
 grant execute on function public.profi_verification_admin() to authenticated;
 drop policy if exists profi_verification_admin_read on public.profi_specialist_verifications;
@@ -41,7 +39,7 @@ revoke all on function public.profi_request_verification() from public,anon;
 grant execute on function public.profi_request_verification() to authenticated;
 create or replace function public.profi_admin_list_verifications()
 returns table(specialist_id uuid,display_name text,category text,city text,status text,requested_at timestamptz,note text)
-language plpgsql security invoker set search_path=public as $$
+language plpgsql security definer set search_path=public as $
 begin
  if not public.profi_verification_admin() then raise exception 'Not authorized'; end if;
  return query select v.specialist_id,p.display_name::text,p.category::text,p.city::text,v.status,v.requested_at,v.note
@@ -55,7 +53,7 @@ drop policy if exists profi_verification_admin_update on public.profi_specialist
 create policy profi_verification_admin_update on public.profi_specialist_verifications for update to authenticated
  using (public.profi_verification_admin()) with check (public.profi_verification_admin());
 create or replace function public.profi_admin_decide_verification(p_specialist_id uuid,p_status text,p_note text default '')
-returns void language plpgsql security invoker set search_path=public as $$
+returns void language plpgsql security definer set search_path=public as $
 begin
  if not public.profi_verification_admin() then raise exception 'Not authorized'; end if;
  if p_status not in ('verified','rejected') or char_length(coalesce(p_note,''))>500 then raise exception 'Invalid decision'; end if;
