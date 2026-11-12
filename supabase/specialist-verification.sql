@@ -41,7 +41,7 @@ revoke all on function public.profi_request_verification() from public,anon;
 grant execute on function public.profi_request_verification() to authenticated;
 create or replace function public.profi_admin_list_verifications()
 returns table(specialist_id uuid,display_name text,category text,city text,status text,requested_at timestamptz,note text)
-language plpgsql security invoker set search_path=public as $
+language plpgsql security invoker set search_path=public as $$
 begin
  if not public.profi_verification_admin() then raise exception 'Not authorized'; end if;
  return query select v.specialist_id,p.display_name::text,p.category::text,p.city::text,v.status,v.requested_at,v.note
@@ -55,7 +55,7 @@ drop policy if exists profi_verification_admin_update on public.profi_specialist
 create policy profi_verification_admin_update on public.profi_specialist_verifications for update to authenticated
  using (public.profi_verification_admin()) with check (public.profi_verification_admin());
 create or replace function public.profi_admin_decide_verification(p_specialist_id uuid,p_status text,p_note text default '')
-returns void language plpgsql security invoker set search_path=public as $
+returns void language plpgsql security invoker set search_path=public as $$
 begin
  if not public.profi_verification_admin() then raise exception 'Not authorized'; end if;
  if p_status not in ('verified','rejected') or char_length(coalesce(p_note,''))>500 then raise exception 'Invalid decision'; end if;
