@@ -144,9 +144,37 @@ async function showReviewForm(){
  available.forEach(o=>option(select,o.id,o.description.slice(0,90)));
  form.hidden=false;
 }
+let reviewModal=null,reviewHome=null;
+function closeReviewModal(){
+ if(!reviewModal)return;
+ const form=$("reviewForm");
+ if(reviewHome&&form)reviewHome.appendChild(form);
+ reviewModal.remove();reviewModal=null;reviewHome=null;
+ document.removeEventListener("keydown",reviewEscape);
+}
+function reviewEscape(e){if(e.key==="Escape")closeReviewModal()}
+window.PROFI_OPEN_REVIEW_MODAL=function(orderId){
+ const form=$("reviewForm"),select=$("reviewOrders");
+ if(!form||form.hidden||![...select.options].some(o=>o.value===orderId))return;
+ select.value=orderId;
+ if(reviewModal){$("reviewBody")?.focus();return}
+ reviewHome=form.parentElement;
+ const overlay=document.createElement("div");
+ overlay.setAttribute("role","presentation");
+ overlay.style.cssText="position:fixed;inset:0;z-index:10050;background:rgba(18,30,48,.65);display:flex;align-items:center;justify-content:center;padding:16px";
+ const panel=document.createElement("div");
+ panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-labelledby","reviewTitle");
+ panel.style.cssText="position:relative;width:min(100%,520px);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:24px;box-shadow:0 16px 60px rgba(0,0,0,.2)";
+ const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Закрыть");
+ close.style.cssText="position:absolute;top:8px;right:12px;background:#fff;border:0;font-size:30px;cursor:pointer;color:#253047";
+ close.onclick=closeReviewModal;overlay.onclick=e=>{if(e.target===overlay)closeReviewModal()};
+ panel.append(close,form);overlay.append(panel);document.body.append(overlay);
+ reviewModal=overlay;document.addEventListener("keydown",reviewEscape);
+ form.hidden=false;$("reviewBody")?.focus({preventScroll:true});
+};
 window.PROFI_REFRESH_REVIEWS=showReviewForm;
 window.addEventListener("profi:reviews-updated",showReviewForm);
-async function submitReview(e){e.preventDefault();const {error}=await db.rpc("submit_specialist_review",{p_order_id:$("reviewOrders").value,p_rating:Number($("reviewRating").value),p_body:$("reviewBody").value.trim()});status(error?error.message:tr("Отзыв опубликован","Sharh e’lon qilindi","Шарҳ нашр шуд"));if(!error){$("reviewBody").value="";showReviewForm();load()}}
+async function submitReview(e){e.preventDefault();const {error}=await db.rpc("submit_specialist_review",{p_order_id:$("reviewOrders").value,p_rating:Number($("reviewRating").value),p_body:$("reviewBody").value.trim()});status(error?error.message:tr("Отзыв опубликован","Sharh e’lon qilindi","Шарҳ нашр шуд"));if(!error){closeReviewModal();$("reviewBody").value="";showReviewForm();load()}}
 function labels(){setupQuickSearch();const q=$("directoryKeyword"),sort=$("directorySort");if(q)q.placeholder=tr("Имя, профессия, услуга...","Ism, kasb, xizmat...","Ном, касб, хизмат...");if(sort){sort.options[0].textContent=tr("По рейтингу","Reyting bo‘yicha","Аз рӯи рейтинг");sort.options[1].textContent=tr("По опыту","Tajriba bo‘yicha","Аз рӯи таҷриба")};$("directoryTitle").textContent=tr("Найти специалиста","Mutaxassis topish","Ёфтани мутахассис");$("directoryCityLabel").textContent=tr("Город","Shahar","Шаҳр");$("directoryCategoryLabel").textContent=tr("Категория","Toifa","Категория");$("directoryServiceLabel").textContent=tr("Услуга","Xizmat","Хизмат");$("directorySearch").textContent=tr("Найти","Qidirish","Ҷустуҷӯ");$("publicProfileTitle").textContent=tr("Моё портфолио","Mening portfoliom","Портфолиои ман");const editProfileButton=$("profiEditProfileButton");if(editProfileButton)editProfileButton.textContent=tr("Редактировать профиль","Profilni tahrirlash","Таҳрири профил");$("avatarUploadLabel").textContent=tr("Фото профиля (JPG, PNG, WebP)","Profil rasmi (JPG, PNG, WebP)","Акси профил (JPG, PNG, WebP)");$("portfolioUploadLabel").textContent=tr("Добавить фотографии работ (до 8)","Ishlar rasmlarini qo‘shish (8 tagacha)","Иловаи аксҳои кор (то 8)");$("clearPortfolio").textContent=tr("Удалить все фото работ","Barcha ish rasmlarini o‘chirish","Нест кардани ҳамаи аксҳои кор");$("profileSave").textContent=tr("Сохранить профиль","Profilni saqlash","Нигоҳ доштани профил");$("reviewTitle").textContent=tr("Оставить отзыв после работы","Ishdan keyin sharh qoldirish","Пас аз кор шарҳ гузоред");$("reviewSend").textContent=tr("Опубликовать отзыв","Sharhni yuborish","Нашри шарҳ");renderFilters()}
 $("directoryCategory").onchange=()=>{renderFilters();load()};$("directoryCity").onchange=load;$("directoryService").onchange=load;$("directorySearch").onclick=load;$("publicProfileEditor").onsubmit=saveProfile;$("reviewForm").onsubmit=submitReview;
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{labels();load();loadFeaturedVerified();if(activeProfile&&$("specialistDialog").open)openProfile(activeProfile)}));
