@@ -4,6 +4,7 @@
 const db=window.PROFI_DB,feed=document.getElementById("proFeed");
 if(!db||!feed)return;
 const tr={ru:["Мои работы","Принятые","В работе","Завершённые","Нет заказов","Обновить","Заказ","Стоимость предложения","Статус заказа","Не удалось загрузить работы"],uz:["Mening ishlarim","Qabul qilingan","Jarayonda","Tugallangan","Buyurtmalar yo‘q","Yangilash","Buyurtma","Taklif narxi","Buyurtma holati","Ishlarni yuklab bo‘lmadi"],tj:["Корҳои ман","Қабулшуда","Дар иҷро","Анҷомёфта","Фармоиш нест","Навсозӣ","Фармоиш","Нархи пешниҳод","Ҳолати фармоиш","Боргирӣ нашуд"]};
+const details={ru:["Дата заказа","Заказчик","Заказов"],uz:["Buyurtma sanasi","Buyurtmachi","Buyurtmalar"],tj:["Санаи фармоиш","Фармоишгар","Фармоишҳо"]};
 const language=()=>document.documentElement.lang?.slice(0,2)==="uz"?"uz":document.documentElement.lang?.slice(0,2)==="tj"?"tj":"ru";
 const txt=()=>tr[language()];
 const section=document.createElement("div");section.className="dashpanel";section.id="proMyWorks";section.hidden=true;
@@ -16,10 +17,10 @@ let filter="accepted",currentUser="",loading=false,cache=[];
 const make=(tag,cls,value)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(value!=null)el.textContent=value;return el};
 function render(){
  const x=txt();heading.textContent=x[0];refresh.textContent=x[5];tabs.replaceChildren();
- ["accepted","in_progress","completed"].forEach((key,i)=>{const b=make("button",key===filter?"primary":"outline",x[i+1]);b.type="button";b.onclick=()=>{filter=key;render()};tabs.append(b)});
- list.replaceChildren();const matching=cache.filter(o=>filter==="accepted"?o.status==="open":o.status===filter);
+ ["accepted","in_progress","completed"].forEach((key,i)=>{const b=make("button",key===filter?"primary":"outline",x[i+1]);b.type="button";b.setAttribute("aria-pressed",String(key===filter));b.onclick=()=>{filter=key;render()};tabs.append(b)});
+ list.replaceChildren();const matching=cache.filter(o=>filter==="accepted"?o.status==="open":o.status===filter);heading.textContent=x[0]+" · "+cache.length;
  if(!matching.length){list.append(make("p","empty",x[4]));return}
- for(const o of matching){const card=make("div","dashitem");card.append(make("strong","",o.category||x[6]));if(o.service_key)card.append(make("p","",o.service_key));card.append(make("p","",o.description||""));card.append(make("span","tag",filter==="accepted"?x[1]:filter==="in_progress"?x[2]:x[3]));if(o.proposalPrice!=null)card.append(make("p","",x[7]+": "+Number(o.proposalPrice).toLocaleString("ru-RU")+" UZS"));list.append(card)}
+ for(const o of matching){const card=make("div","dashitem");card.append(make("strong","",o.category||x[6]));if(o.service_key)card.append(make("p","",o.service_key));card.append(make("p","",o.description||""));card.append(make("span","tag",filter==="accepted"?x[1]:filter==="in_progress"?x[2]:x[3]));if(o.created_at)card.append(make("p","",details[language()][0]+": "+new Date(o.created_at).toLocaleDateString(language()==="uz"?"uz-UZ":language()==="tj"?"tg-TJ":"ru-RU")));if(o.proposalPrice!=null)card.append(make("p","",x[7]+": "+Number(o.proposalPrice).toLocaleString("ru-RU")+" UZS"));list.append(card)}
 }
 async function load(){
  if(loading||!currentUser)return;loading=true;refresh.disabled=true;
@@ -28,7 +29,7 @@ async function load(){
   if(pe)throw pe;
   const byId=new Map((proposals||[]).map(p=>[p.order_id,p]));
   if(!byId.size){cache=[];render();return}
-  const {data:orders,error:oe}=await db.from("orders").select("id,category,description,service_key,status").in("id",[...byId.keys()]).limit(200);
+  const {data:orders,error:oe}=await db.from("orders").select("id,category,description,service_key,status,created_at").in("id",[...byId.keys()]).limit(200);
   if(oe)throw oe;
   cache=(orders||[]).map(o=>({...o,proposalPrice:byId.get(o.id)?.price_uzs}));
   render();
