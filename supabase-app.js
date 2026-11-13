@@ -148,6 +148,7 @@ if(nativeAuth()){
  const emailSection=$("smsAuth");
  if(emailSection)emailSection.hidden=true;
 }
+initNativeAuth().catch(e=>sessionIssue("Android: CALLBACK_LISTENER_FAILED "+e.message));
 $("googleLogin").onclick=()=>socialSignIn("google");
 $("appleLogin").onclick=()=>socialSignIn("apple");
 const authValues=()=>({email:$("liveEmail").value.trim(),password:$("livePassword").value});
@@ -181,5 +182,5 @@ $("liveOrderForm").onsubmit=async e=>{e.preventDefault();if(!user||needsName())r
  if(user){await verifySavedSession();await refresh()}else render();const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}
 })().catch(e=>sessionIssue("Android: STARTUP_ERROR "+e.message));
 }
-document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);initNativeAuth().catch(e=>sessionIssue("Android: CALLBACK_LISTENER_FAILED "+e.message)).finally(()=>init());
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();
 })();
