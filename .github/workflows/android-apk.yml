@@ -14,6 +14,9 @@ on:
       - 'auth-client.js'
       - 'mobile-updates.js'
       - 'index.html'
+      - '*.js'
+      - '*.css'
+      - '*.html'
       - 'profi-icon.svg'
       - '.github/workflows/android-apk.yml'
 
