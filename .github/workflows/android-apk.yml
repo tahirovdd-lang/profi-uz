@@ -103,7 +103,7 @@ jobs:
           """,1)
           if "release {" not in src:
               raise SystemExit("Android release build type not found")
-          src=src.replace("release {","release {\\n            signingConfig signingConfigs.profiRelease",1)
+          src=src.replace("release {","release {\n            signingConfig signingConfigs.profiRelease",1)
           if "signingConfig signingConfigs.profiRelease" not in src:
               raise SystemExit("Could not configure release signing")
           gradle.write_text(src)
