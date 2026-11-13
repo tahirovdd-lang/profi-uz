@@ -24,6 +24,7 @@ function orderSpecialistService(p,key,amount){
  const dialog=$("specialistDialog");if(dialog.open)dialog.close();
  sessionStorage.setItem("profi_selected_role","client");
  sessionStorage.setItem("profi_selected_category",p.category||"");
+ sessionStorage.setItem("profi_direct_order_specialist",p.id);
  window.dispatchEvent(new CustomEvent("profi:role-selected",{detail:{role:"client",category:p.category}}));
  const category=$("liveCategory"),service=$("liveService"),description=$("liveDescription");
  if(category&&[...category.options].some(o=>o.value===p.category)){category.value=p.category;category.dispatchEvent(new Event("change",{bubbles:true}))}
