@@ -1,6 +1,6 @@
 # Profi.UZ — Android release signing
 
-The workflow `.github/workflows/android-release.yml` publishes a signed `ProfiUZ.apk` to GitHub Releases. It never commits a keystore or passwords.
+The workflow `.github/workflows/android-release.yml` builds signed `ProfiUZ.apk` and `ProfiUZ.aab` and publishes both to GitHub Releases. The AAB is intended for Google Play Console. It never commits a keystore or passwords.
 
 ## One-time setup (Windows PowerShell)
 
@@ -20,10 +20,13 @@ In repository **Settings → Secrets and variables → Actions**, create four re
 - `ANDROID_KEY_ALIAS`: `profiuz` (or the alias used above).
 - `ANDROID_KEY_PASSWORD`: key password.
 
-Run **Actions → Android signed release → Run workflow**. The first run publishes version `v0.2.0`; later releases require increasing `package.json` version first.
+Run **Actions → Android signed release → Run workflow**. The first run publishes version `v0.2.0`; later releases require increasing `package.json` version first. Download `ProfiUZ.aab` from the GitHub Release or the `ProfiUZ-Google-Play-AAB` Actions artifact and upload it to a Google Play Console testing track. Google Play developer account, store listing, privacy policy, Data safety declaration, app access instructions, and required testing/review are managed separately in Play Console.
 
 Stable download URL (after first successful release):
 https://github.com/tahirovdd-lang/profi-uz/releases/latest/download/ProfiUZ.apk
+
+Google Play bundle (after first successful release):
+https://github.com/tahirovdd-lang/profi-uz/releases/latest/download/ProfiUZ.aab
 
 **Important:** existing debug APKs are signed with a different certificate and cannot be upgraded in place to this release APK. Users must uninstall the debug APK once before installing the first signed release. Subsequent signed releases can upgrade in place as long as the same keystore and application ID are used. Removing a debug APK can remove local app data; confirm any unsynced data is backed up first.
 
