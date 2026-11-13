@@ -2,6 +2,7 @@
 (function(){
 "use strict";
 const endpoint="https://profiuz.uz/mobile-config.json";
+const releasesEndpoint="https://api.github.com/repos/tahirovdd-lang/profi-uz/releases/latest";
 const cap=()=>window.Capacitor;
 const platform=()=>cap()?.getPlatform?.()||"web";
 const native=()=>cap()?.isNativePlatform?.()===true;
@@ -19,6 +20,17 @@ function message(id,css){
  if(!node){node=document.createElement("div");node.id=id;node.style.cssText=css;document.body.prepend(node)}
  return node;
 }
+async function findAndroidRelease(){
+ try{
+  const response=await fetch(releasesEndpoint,{headers:{"Accept":"application/vnd.github+json"},cache:"no-store"});
+  if(!response.ok)return null;
+  const release=await response.json();
+  const match=/^android-(\d+)$/.exec(release.tag_name||"");
+  const apk=(release.assets||[]).find(asset=>/^Profi\.UZ-\d+\.apk$/.test(asset.name||""));
+  if(!match||!apk?.browser_download_url)return null;
+  return {latestVersionCode:Number(match[1]),downloadUrl:apk.browser_download_url};
+ }catch(e){console.warn("Profi.UZ Android release check:",e);return null}
+}
 async function render(config){
  if(!native()||!config||config.schema!==1)return;
  latest=config;
@@ -28,7 +40,12 @@ async function render(config){
  banner.textContent=a.enabled?(a[lang()]||a.ru||""):"";
  // Never override the active navigation state: a disabled feature is checked by its entry point.
  const os=platform();
- const policy=config[os]||{};
+ const policy={...(config[os]||{})};
+ if(os==="android"){
+  const published=await findAndroidRelease();
+  if(published){policy.latestVersionCode=published.latestVersionCode;policy.downloadUrl=published.downloadUrl}
+  else {policy.latestVersionCode=0;policy.downloadUrl=""}
+ }
  const current=await installedBuild();
  const newest=Number(policy.latestVersionCode)||0;
  const minimum=Number(policy.minimumVersionCode)||0;
