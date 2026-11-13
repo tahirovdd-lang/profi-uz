@@ -24,7 +24,7 @@ async function loadStats(){
 const request=el("div");request.className="dashpanel";request.style.marginTop="16px";request.hidden=true;
 const reqTitle=el("h3",tr("Проверка специалиста","Mutaxassisni tasdiqlash","Тасдиқи мутахассис"));
 const reqText=el("p");const reqButton=el("button",tr("Подать заявку на проверку","Tasdiqlash uchun ariza","Дархост барои тасдиқ"));reqButton.className="outline";reqButton.type="button";
-request.append(reqTitle,reqText,reqButton);root.append(request);
+request.append(reqTitle,reqText,reqButton);const roleTools=document.getElementById("roleTools");if(roleTools)roleTools.insertAdjacentElement("afterend",request);else root.querySelector(".dashboard")?.append(request);
 const db=()=>window.PROFI_DB;
 let requestSequence=0;
 async function load(){
