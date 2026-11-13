@@ -32,6 +32,10 @@ const style=document.createElement("style");style.textContent=`
 #profiAccountBody>[data-account-section].account-active[hidden]{display:none!important}
 #profiAccountDrawer .dashpanel{max-width:100%;margin:0!important;padding:14px!important;border-radius:14px}
 #profiAccountDrawer #liveSigned{padding:14px}
+#profiAccountDrawer #liveSigned>[hidden]{display:none!important}
+#profiAccountDrawer #liveSigned #roleTools{margin:14px 0!important}
+#profiAccountDrawer #liveSigned #proPanel{margin-top:14px}
+#profiAccountDrawer #liveSigned .dashpanel{margin:12px 0!important}
 body.profi-account-open{overflow:hidden}
 @media(max-width:520px){#profiAccountDrawerInner{width:100%;padding:18px 16px}#profiAccountDrawerTitle{font-size:21px!important}}
 `;document.head.append(style);
@@ -51,7 +55,7 @@ notifications:{color:"#e99a22",bg:"#fff5df",paths:'<path d="M18 8a6 6 0 0 0-12 0
 messages:{color:"#1d9ab7",bg:"#e5f8fc",paths:'<path d="M20 11.5a8 8 0 0 1-8 8 9 9 0 0 1-4-.9L3 20l1.5-4.7A8 8 0 1 1 20 11.5Z"/><path d="M8 10h8M8 14h5"/>'},
 settings:{color:"#6e7788",bg:"#eef1f5",paths:'<path d="M10 2h4l.7 2.3 2 .9 2.1-1.1 2.7 2.8-1.1 2.1.9 2L23 12l-1.7 1-.9 2 1.1 2.1-2.7 2.8-2.1-1.1-2 .9L14 22h-4l-.7-2.3-2-.9-2.1 1.1-2.7-2.8 1.1-2.1-.9-2L1 12l1.7-1 .9-2-1.1-2.1 2.7-2.8 2.1 1.1 2-.9L10 2Z"/><circle cx="12" cy="12" r="3"/>'}
 };
-function mount(){for(const [key,id] of categories){const el=id?document.getElementById(id):null;if(el&&!mounted.has(key)){el.dataset.accountSection=key;body.append(el);mounted.add(key)}}}
+function mount(){for(const [key,id] of categories){const el=id?document.getElementById(id):null;if(el&&!mounted.has(key)){el.dataset.accountSection=key;body.append(el);mounted.add(key)}}const settings=document.getElementById("liveSigned");if(settings&&settings.parentElement===body){for(const id of ["roleTools","profiSpecialistAccountControls","proEditTools","proPanel","proRegistration","publicProfileEditor"]){const node=document.getElementById(id);if(node&&node.parentElement!==settings)settings.append(node)}const verify=[...document.querySelectorAll("section,div")].find(x=>x.id&&/verif|check.*specialist/i.test(x.id)&&x.id!=="profiAccountDrawer");if(verify&&verify.parentElement!==settings&&!settings.contains(verify)&&!verify.contains(settings))settings.append(verify)}}
 function isSigned(){return !!document.getElementById("liveUser")?.textContent?.trim()&&!document.getElementById("liveSigned")?.hidden}
 function isSpecialist(){const b=document.getElementById("proMode");return !!b&&!b.hidden&&b.classList.contains("primary")}
 function visibleCategory(key){return key!=="work"&&key!=="feed"||isSpecialist()}
