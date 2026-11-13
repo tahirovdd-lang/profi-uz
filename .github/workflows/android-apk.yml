@@ -64,7 +64,7 @@ jobs:
           python3 - <<'PY'
           import json,re,pathlib
           version=json.loads(pathlib.Path("package.json").read_text())["version"]
-          code=int("".join(f"{int(x):02d}" for x in version.split(".")[:3]))
+          code=20000+int("${{ github.run_number }}")
           gradle=pathlib.Path("android/app/build.gradle")
           src=gradle.read_text()
           src,n=re.subn(r'versionCode\s+\d+',f'versionCode {code}',src,count=1)
@@ -74,13 +74,49 @@ jobs:
           gradle.write_text(src)
           print("Android version:",version,"build:",code)
           PY
-      - name: Build test APK
+      - name: Configure stable Android signing
+        env:
+          PROFI_ANDROID_KEYSTORE_BASE64: ${{ secrets.PROFI_ANDROID_KEYSTORE_BASE64 }}
+          PROFI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PROFI_ANDROID_KEYSTORE_PASSWORD }}
+          PROFI_ANDROID_KEY_ALIAS: ${{ secrets.PROFI_ANDROID_KEY_ALIAS }}
+          PROFI_ANDROID_KEY_PASSWORD: ${{ secrets.PROFI_ANDROID_KEY_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import os,base64,pathlib
+          keys=("PROFI_ANDROID_KEYSTORE_BASE64","PROFI_ANDROID_KEYSTORE_PASSWORD","PROFI_ANDROID_KEY_ALIAS","PROFI_ANDROID_KEY_PASSWORD")
+          if not all(os.getenv(k) for k in keys):
+              raise SystemExit("Stable signing not configured: add all four PROFI_ANDROID_* GitHub Actions secrets. An unsigned or ephemeral-debug APK cannot safely update existing installations.")
+          store=pathlib.Path("android/app/profi-release.jks")
+          store.write_bytes(base64.b64decode(os.environ["PROFI_ANDROID_KEYSTORE_BASE64"],validate=True))
+          gradle=pathlib.Path("android/app/build.gradle")
+          src=gradle.read_text()
+          if "signingConfigs {" not in src:
+              src=src.replace("android {", """android {
+              signingConfigs {
+                  profiRelease {
+                      storeFile file('profi-release.jks')
+                      storePassword System.getenv('PROFI_ANDROID_KEYSTORE_PASSWORD')
+                      keyAlias System.getenv('PROFI_ANDROID_KEY_ALIAS')
+                      keyPassword System.getenv('PROFI_ANDROID_KEY_PASSWORD')
+                  }
+              }
+          """,1)
+          src=src.replace("signingConfig signingConfigs.debug","signingConfig signingConfigs.profiRelease")
+          if "signingConfig signingConfigs.profiRelease" not in src:
+              raise SystemExit("Could not configure release signing")
+          gradle.write_text(src)
+          PY
+      - name: Build updateable signed APK
         working-directory: android
-        run: bash ./gradlew assembleDebug --no-daemon
+        env:
+          PROFI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PROFI_ANDROID_KEYSTORE_PASSWORD }}
+          PROFI_ANDROID_KEY_ALIAS: ${{ secrets.PROFI_ANDROID_KEY_ALIAS }}
+          PROFI_ANDROID_KEY_PASSWORD: ${{ secrets.PROFI_ANDROID_KEY_PASSWORD }}
+        run: bash ./gradlew assembleRelease --no-daemon
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: ProfiUZ-Android-Test-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: ProfiUZ-Android-Signed-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
