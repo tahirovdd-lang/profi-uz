@@ -40,7 +40,7 @@ begin
   raise exception 'Specialist account required';
  end if;
  -- Protect administrators from inadvertently destroying the site's administrator account.
- if exists(select 1 from public.profiles p where p.id=v_id and p.role='admin') then
+ if public.profi_verification_admin() then
   raise exception 'Administrator account deletion is not supported here';
  end if;
  delete from auth.users where id=v_id;
