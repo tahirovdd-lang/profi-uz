@@ -19,10 +19,11 @@ body.profi-auth-open{overflow:hidden}
 const sheet=document.createElement("div");sheet.id="profiAuthSheet";sheet.hidden=true;sheet.innerHTML='<section id="profiAuthSheetPanel" role="dialog" aria-modal="true" aria-labelledby="profiAuthSheetTitle"><button type="button" id="profiAuthSheetClose" aria-label="Закрыть">×</button><h2 id="profiAuthSheetTitle"></h2><p id="profiAuthSheetDescription"></p><div id="profiAuthSheetContent"></div></section>';document.body.append(sheet);
 const container=sheet.querySelector("#profiAuthSheetContent"),original=new Map([[login,{parent:login.parentNode,next:login.nextSibling}],[social,{parent:social.parentNode,next:social.nextSibling}]]);let previousFocus=null;
 const t=(ru,uz,tj)=>({ru,uz,tj})[localStorage.getItem("profi_lang")||"ru"]||ru;
-function restore(){for(const node of [login,social]){const p=original.get(node);if(p.next?.parentNode===p.parent)p.parent.insertBefore(node,p.next);else p.parent.append(node)}}
+function restore(){/* Keep sign-in controls inside the hidden sheet, never on the public page. */}
 function close(){if(sheet.hidden)return;restore();sheet.hidden=true;document.body.classList.remove("profi-auth-open");previousFocus?.focus?.()}
 function open(){if(!document.getElementById("liveSigned")?.hidden){window.PROFI_ACCOUNT_MENU?.open();return}previousFocus=document.activeElement;sheet.querySelector("#profiAuthSheetTitle").textContent=t("Вход в Profi.UZ","Profi.UZ ga kirish","Воридшавӣ ба Profi.UZ");sheet.querySelector("#profiAuthSheetDescription").textContent=t("Войдите или создайте аккаунт с Google, Apple или электронной почтой.","Google, Apple yoki elektron pochta orqali kiring yoki ro‘yxatdan o‘ting.","Бо Google, Apple ё почтаи электронӣ ворид шавед ё сабти ном кунед.");container.append(social,login);social.hidden=false;login.hidden=window.Capacitor?.isNativePlatform?.()===true;sheet.hidden=false;document.body.classList.add("profi-auth-open");sheet.querySelector("#profiAuthSheetClose").focus()}
 sheet.querySelector("#profiAuthSheetClose").onclick=close;sheet.addEventListener("click",e=>{if(e.target===sheet)close()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!sheet.hidden)close()});
+container.append(social,login);sheet.hidden=true;
 window.PROFI_AUTH_SHEET={open,close};
 const db=window.PROFI_DB;if(db?.auth?.onAuthStateChange)db.auth.onAuthStateChange((event,session)=>{if(session?.user&&!sheet.hidden)setTimeout(close,100)});
 })();
