@@ -262,26 +262,36 @@ render();translateContacts();
  const db=window.PROFI_DB;
  const lang=()=>localStorage.getItem("profi_lang")||"ru";
  const tr=(ru,uz,tj)=>({ru,uz,tj})[lang()]||ru;
- let userId=null,request=0,loading=false;
+ let userId=null,request=0,loading=false,channel=null,refreshTimer=null,lastSnapshot="";
  const section=$("accountNotifications"),items=$("notifyItems"),status=$("notifyStatus");
  const item=(title,subtitle,tag)=>{const row=document.createElement("div");row.className="profi-notification";const left=document.createElement("div"),h=document.createElement("strong"),small=document.createElement("small");h.textContent=title;small.textContent=subtitle;left.append(h,small);row.append(left);if(tag){const badge=document.createElement("span");badge.className="tag";badge.textContent=tag;row.append(badge)}items.append(row)};
+ function scheduleRefresh(){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{refreshTimer=null;if(!document.hidden)refresh()},350)}
+ function connectRealtime(uid){
+  if(channel){db.removeChannel(channel);channel=null}
+  if(!uid||!db.channel)return;
+  channel=db.channel("profi-alerts-"+uid)
+   .on("postgres_changes",{event:"*",schema:"public",table:"orders"},scheduleRefresh)
+   .on("postgres_changes",{event:"*",schema:"public",table:"proposals"},scheduleRefresh)
+   .on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},scheduleRefresh)
+   .subscribe();
+ }
  async function refresh(){
   if(loading)return;loading=true;const seq=++request;
   try{
    const {data:{user},error:authError}=await db.auth.getUser();
    if(seq!==request)return;
-   if(authError||!user){userId=null;section.hidden=true;items.replaceChildren();return}
-   userId=user.id;section.hidden=false;
+   if(authError||!user){if(userId)connectRealtime(null);userId=null;lastSnapshot="";section.hidden=true;items.replaceChildren();return}
+   if(userId!==user.id){userId=user.id;lastSnapshot="";connectRealtime(user.id)}section.hidden=false;
    $("notifyHeading").textContent=tr("Уведомления","Bildirishnomalar","Огоҳиҳо");
    $("notifyRefresh").textContent=tr("Обновить","Yangilash","Навсозӣ");
-   status.textContent=tr("Проверяем заказы и отклики...","Buyurtmalar va takliflar tekshirilmoqda...","Фармоишҳо ва пешниҳодҳо санҷида мешаванд...");
+   if(!items.children.length)status.textContent=tr("Проверяем заказы и отклики...","Buyurtmalar va takliflar tekshirilmoqda...","Фармоишҳо ва пешниҳодҳо санҷида мешаванд...");
    const {data:orders,error:ordersError}=await db.from("orders").select("id,category,status,created_at").eq("client_id",user.id).order("created_at",{ascending:false}).limit(40);
    if(seq!==request)return;
    if(ordersError)throw ordersError;
    const {data:myProposals,error:proposalsError}=await db.from("proposals").select("id,order_id,status").eq("specialist_id",user.id).limit(80);
    if(seq!==request)return;
    if(proposalsError)throw proposalsError;
-   items.replaceChildren();let count=0;
+   const pending=[];const item=(title,subtitle,tag)=>pending.push([title,subtitle,tag]);let count=0;
    const ids=(orders||[]).map(o=>o.id);
    if(ids.length){
     const {data:replies,error:replyError}=await db.from("proposals").select("id,order_id,status").in("order_id",ids).limit(150);
@@ -298,12 +308,12 @@ render();translateContacts();
     const names=new Map((acceptedOrders||[]).map(o=>[o.id,o]));
     for(const p of accepted){const order=names.get(p.order_id);count++;item(tr("Ваше предложение принято!","Taklifingiz qabul qilindi!","Пешниҳоди шумо қабул шуд!"),order?.category||tr("Откройте чат с заказчиком","Buyurtmachi bilan suhbatni oching","Чатро бо фармоишгар кушоед"),order?.status==="completed"?tr("Завершён","Yakunlangan","Анҷом ёфт"):tr("Выбрали вас","Siz tanlandingiz","Шуморо интихоб карданд"))}
    }
-   status.textContent=count?"":tr("Пока нет уведомлений","Hozircha bildirishnomalar yo‘q","Ҳоло огоҳӣ нест");
+   const snapshot=JSON.stringify(pending);if(snapshot!==lastSnapshot){items.replaceChildren();for(const [title,subtitle,tag] of pending){const row=document.createElement("div");row.className="profi-notification";const left=document.createElement("div"),h=document.createElement("strong"),small=document.createElement("small");h.textContent=title;small.textContent=subtitle;left.append(h,small);row.append(left);if(tag){const badge=document.createElement("span");badge.className="tag";badge.textContent=tag;row.append(badge)}items.append(row)}lastSnapshot=snapshot}status.textContent=count?"":tr("Пока нет уведомлений","Hozircha bildirishnomalar yo‘q","Ҳоло огоҳӣ нест");
   }catch(e){if(seq===request)status.textContent=tr("Не удалось загрузить уведомления: ","Bildirishnomalarni yuklab bo‘lmadi: ","Боркунии огоҳиҳо нашуд: ")+e.message}
   finally{loading=false}
  }
  $("notifyRefresh").addEventListener("click",refresh);
- window.addEventListener("profi:orders-updated",refresh);
+ window.addEventListener("profi:orders-updated",scheduleRefresh);
  db.auth.onAuthStateChange(()=>setTimeout(refresh,150));
  document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>setTimeout(refresh,100)));
  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
