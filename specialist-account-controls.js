@@ -1,0 +1,19 @@
+(function(){
+"use strict";
+const db=window.PROFI_DB;if(!db)return;
+const tr=(ru,uz,tj)=>({ru,uz,tj})[localStorage.getItem("profi_lang")]||ru;
+let currentUser=null,paused=false,busy=false;
+const box=document.createElement("section");box.id="profiSpecialistAccountControls";box.className="dashpanel";box.hidden=true;box.style.marginTop="18px";
+const heading=document.createElement("h3"),info=document.createElement("p"),actions=document.createElement("div"),toggle=document.createElement("button"),remove=document.createElement("button"),message=document.createElement("p");
+actions.style.cssText="display:flex;flex-wrap:wrap;gap:10px";toggle.className="outline";toggle.type="button";remove.className="outline";remove.type="button";message.className="msg";message.setAttribute("aria-live","polite");
+actions.append(toggle,remove);box.append(heading,info,actions,message);
+const signed=document.getElementById("liveSigned");if(!signed)return;signed.insertAdjacentElement("afterend",box);
+function labels(){heading.textContent=tr("Управление аккаунтом специалиста","Mutaxassis akkauntini boshqarish","Идоракунии ҳисоби мутахассис");info.textContent=paused?tr("Ваши услуги временно скрыты из каталога. Данные сохранены.","Xizmatlaringiz katalogda vaqtincha yashirilgan. Ma’lumotlar saqlangan.","Хизматҳои шумо муваққатан пинҳонанд. Маълумот нигоҳ дошта шудааст."):tr("Ваш профиль доступен заказчикам. При паузе данные сохраняются.","Profilingiz mijozlarga ko‘rinadi. To‘xtatishda ma’lumotlar saqlanadi.","Профили шумо дастрас аст. Ҳангоми таваққуф маълумот нигоҳ дошта мешавад.");toggle.textContent=paused?tr("Возобновить услуги","Xizmatlarni qayta yoqish","Аз нав фаъол кардан"):tr("Временно отключить аккаунт","Akkauntni vaqtincha to‘xtatish","Ҳисобро муваққатан хомӯш кардан");remove.textContent=tr("Удалить аккаунт","Akkauntni o‘chirish","Ҳисобро нест кардан");toggle.disabled=remove.disabled=busy}
+async function refresh(){const {data:{user},error}=await db.auth.getUser();if(error||!user){currentUser=null;box.hidden=true;return}const {data:profile}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();currentUser=profile?.role==="specialist"?user:null;box.hidden=!currentUser;if(!currentUser)return;const {data}=await db.from("profi_specialist_visibility").select("paused").eq("specialist_id",user.id).maybeSingle();paused=!!data?.paused;message.textContent="";labels()}
+toggle.onclick=async()=>{if(!currentUser||busy)return;busy=true;labels();const {error}=await db.rpc("profi_set_my_specialist_paused",{p_paused:!paused});busy=false;if(error){message.textContent=error.message;labels();return}paused=!paused;labels();window.dispatchEvent(new Event("profi:specialist-visibility-changed"));message.textContent=tr("Настройки сохранены","Sozlamalar saqlandi","Танзимот нигоҳ дошта шуд")};
+remove.onclick=async()=>{if(!currentUser||busy)return;const warning=tr("Удаление аккаунта необратимо. Вы потеряете доступ к профилю, заявкам и истории. Для подтверждения введите УДАЛИТЬ.","Akkauntni o‘chirish qaytarib bo‘lmaydi. Tasdiqlash uchun УДАЛИТЬ deb yozing.","Нест кардани ҳисоб баргардонида намешавад. Барои тасдиқ УДАЛИТЬ нависед.");const answer=window.prompt(warning);if(answer!=="УДАЛИТЬ")return;if(!window.confirm(tr("Окончательно удалить ваш аккаунт?","Akkauntingiz butunlay o‘chirilsinmi?","Ҳисобро пурра нест мекунед?")))return;busy=true;labels();const {error}=await db.rpc("profi_delete_my_account",{p_confirmation:"DELETE MY ACCOUNT"});busy=false;if(error){message.textContent=tr("Не удалось удалить аккаунт: ","Akkauntni o‘chirib bo‘lmadi: ","Ҳисоб нест нашуд: ")+error.message;labels();return}await db.auth.signOut();window.location.reload()};
+db.auth.onAuthStateChange(()=>setTimeout(refresh,150));
+window.addEventListener("profi:profile-updated",refresh);
+document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",labels));
+refresh();
+})();
