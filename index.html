@@ -276,7 +276,7 @@ header>.wrap>.header-welcome[hidden]{display:none!important}
  if(window.Capacitor?.isNativePlatform?.()!==true||window.Capacitor?.getPlatform?.()!=="android")return;
  document.documentElement.classList.add("profi-native-android");
  const style=document.createElement("style");
- style.textContent="html.profi-native-android body{padding-top:calc(28px + env(safe-area-inset-top,0px))!important}html.profi-native-android header{position:relative;z-index:1}";
+ style.textContent="html.profi-native-android body{padding-top:calc(14px + env(safe-area-inset-top,0px))!important}html.profi-native-android header{position:relative;z-index:1}";
  document.head.appendChild(style);
 })();
 </script></head><body>
