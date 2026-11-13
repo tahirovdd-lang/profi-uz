@@ -150,7 +150,13 @@ if(nativeAuth()){
 }
 initNativeAuth().catch(e=>sessionIssue("Android: CALLBACK_LISTENER_FAILED "+e.message));
 $("googleLogin").onclick=()=>socialSignIn("google");
-$("appleLogin").onclick=()=>socialSignIn("apple");
+$("appleLogin").onclick=()=>{
+ const status=$("socialAuthStatus");
+ const messages={ru:"Данная функция в разработке.",uz:"Ushbu funksiya ishlab chiqilmoqda.",tj:"Ин функсия дар ҳоли таҳия аст."};
+ status.hidden=false;
+ status.textContent=messages[lang()]||messages.ru;
+ status.style.color="#64748b";
+};
 const authValues=()=>({email:$("liveEmail").value.trim(),password:$("livePassword").value});
 const authBusy=busy=>["liveSignIn","liveSignUp","liveSend"].forEach(id=>$(id).disabled=busy);
 $("liveLogin").onsubmit=async e=>{e.preventDefault();if(signupMode){$("liveSignUp").click();return}authBusy(true);const {error}=await db.auth.signInWithPassword(authValues());authBusy(false);if(error)fail(error);else msg(t().welcome)};
