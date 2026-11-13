@@ -27,10 +27,14 @@ const reqText=el("p");const reqButton=el("button",tr("Подать заявку 
 request.append(reqTitle,reqText,reqButton);const roleTools=document.getElementById("roleTools");if(roleTools)roleTools.insertAdjacentElement("afterend",request);else root.querySelector(".dashboard")?.append(request);
 const db=()=>window.PROFI_DB;
 let requestSequence=0;
+let adminLoadSequence=0;
 async function load(){
+ const sequence=++adminLoadSequence;
  if(admin.hidden||!db())return;
  message.textContent=tr("Загрузка...","Yuklanmoqda...","Боркунӣ...");list.replaceChildren();
  const {data,error}=await db().rpc("profi_admin_list_verifications");
+ if(sequence!==adminLoadSequence||admin.hidden)return;
+ list.replaceChildren();
  if(error){message.textContent=error.message;return}
  message.textContent=tr("Заявок: ","Arizalar: ","Дархостҳо: ")+(data||[]).length;
  for(const p of data||[]){
