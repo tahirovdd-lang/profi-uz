@@ -25,6 +25,11 @@ const style=document.createElement("style");style.textContent=`
 #profiAccountBack{display:flex;align-items:center;gap:9px;border:0;background:#f5f6f9;color:#303747;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px;font-weight:650;cursor:pointer}
 #profiAccountBack[hidden]{display:none!important}
 #profiAccountTabs[hidden]{display:none!important}
+#profiAccountTabs .account-inline-content{width:100%;margin:4px 0 12px;padding:4px 0 10px;min-width:0}
+#profiAccountTabs .account-inline-content[hidden]{display:none!important}
+#profiAccountTabs .account-inline-content>.dashpanel{margin:0!important;max-width:100%}
+#profiAccountTabs .account-inline-content>#liveSigned{padding:12px!important}
+#profiAccountTabs .account-inline-content [hidden]{display:none!important}
 #profiAccountBody[hidden]{display:none!important}
 #profiAccountDrawer .account-active{visibility:visible!important;opacity:1!important}
 #profiAccountBody>[data-account-section]{display:none!important}
@@ -59,11 +64,40 @@ function mount(){for(const [key,id] of categories){const el=id?document.getEleme
 function isSigned(){return !!document.getElementById("liveUser")?.textContent?.trim()&&!document.getElementById("liveSigned")?.hidden}
 function isSpecialist(){const b=document.getElementById("proMode");return !!b&&!b.hidden&&b.classList.contains("primary")}
 function visibleCategory(key){return key!=="work"&&key!=="feed"||isSpecialist()}
-function choose(key){mount();selected=key;tabs.hidden=!!key;back.hidden=!key;body.hidden=!key;back.textContent=t("← Назад к меню","← Menyuga qaytish","← Бозгашт ба меню");tabs.replaceChildren();for(const [k,,labels] of categories){if(!visibleCategory(k))continue;const b=document.createElement("button");b.type="button";b.className=k===selected?"primary":"outline";const icon=document.createElement("span");icon.className="account-icon";const iconSpec=icons[k]||icons.overview;icon.style.setProperty("--icon-color",iconSpec.color);icon.style.setProperty("--icon-bg",iconSpec.bg);icon.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${iconSpec.paths}</svg>`;b.append(icon,document.createTextNode(labels[["ru","uz","tj"].indexOf(lang())]||labels[0]));b.setAttribute("aria-pressed",String(k===selected));b.onclick=()=>{if(k==="messages"){close();document.getElementById("chatQuickAccess")?.click();return}choose(k)};tabs.append(b)}for(const node of body.children){const active=node.dataset.accountSection===selected;node.classList.toggle("account-active",active);if(active&&["profiAccountOverview","accountFavorites","accountNotifications","liveSigned"].includes(node.id))node.hidden=false}const item=categories.find(x=>x[0]===selected);title.textContent=item?(item[2][["ru","uz","tj"].indexOf(lang())]||item[2][0]):t("Мой профиль","Mening profilim","Профили ман");drawer.querySelector("#profiAccountDrawerInner").scrollTop=0}
+function choose(key){
+ mount();selected=key;tabs.hidden=false;back.hidden=true;body.hidden=true;for(const old of [...tabs.querySelectorAll(".account-inline-content>[data-account-section]")]){old.classList.remove("account-active");body.append(old)}tabs.replaceChildren();
+ for(const [k,,labels] of categories){
+  if(!visibleCategory(k))continue;
+  const b=document.createElement("button");b.type="button";b.className=k===selected?"primary":"outline";
+  const icon=document.createElement("span");icon.className="account-icon";const iconSpec=icons[k]||icons.overview;
+  icon.style.setProperty("--icon-color",iconSpec.color);icon.style.setProperty("--icon-bg",iconSpec.bg);
+  icon.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${iconSpec.paths}</svg>`;
+  b.append(icon,document.createTextNode(labels[["ru","uz","tj"].indexOf(lang())]||labels[0]));
+  b.setAttribute("aria-pressed",String(k===selected));b.setAttribute("aria-expanded",String(k===selected));
+  b.onclick=()=>{if(k==="messages"){close();document.getElementById("chatQuickAccess")?.click();return}choose(k===selected?"":k)};
+  tabs.append(b);
+  if(k===selected){
+   const content=document.createElement("div");content.className="account-inline-content";content.dataset.accountContent=k;
+   const section=document.querySelector(`[data-account-section="${k}"]`);
+   if(section){
+    section.classList.add("account-active");
+    if(["profiAccountOverview","accountFavorites","accountNotifications","liveSigned"].includes(section.id))section.hidden=false;
+    content.append(section);
+   }else content.textContent=t("Раздел загружается...","Bo‘lim yuklanmoqda...","Қисм бор мешавад...");
+   tabs.append(content);
+  }
+ }
+ for(const section of [...tabs.querySelectorAll(".account-inline-content>[data-account-section]")]){
+  if(section.dataset.accountSection!==selected){section.classList.remove("account-active");body.append(section)}
+ }
+ for(const section of [...body.children])section.classList.remove("account-active");
+ title.textContent=t("Мой профиль","Mening profilim","Профили ман");
+ const active=tabs.querySelector('[aria-expanded="true"]');if(active)active.scrollIntoView({block:"nearest"});
+}
 function open(key=""){if(!isSigned())return;lastFocus=document.activeElement;drawer.hidden=false;document.body.classList.add("profi-account-open");btn.setAttribute("aria-expanded","true");choose(key);drawer.querySelector("#profiAccountDrawerClose").focus()}
 function close(){drawer.hidden=true;document.body.classList.remove("profi-account-open");btn.setAttribute("aria-expanded","false");lastFocus?.focus?.()}
 btn.onclick=()=>drawer.hidden?open():close();drawer.querySelector("#profiAccountDrawerClose").onclick=close;drawer.addEventListener("click",e=>{if(e.target===drawer)close()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!drawer.hidden)close()});
-function sync(){mount();btn.hidden=!isSigned();const heading=app.querySelector('[data-live="title"]'),subtitle=app.querySelector('[data-live="sub"]');if(heading)heading.hidden=isSigned();if(subtitle)subtitle.hidden=isSigned();const chat=document.getElementById("chatQuickAccess");if(chat)chat.style.display=isSigned()?"none":"";if(!isSigned()&&!drawer.hidden)close();if(!drawer.hidden)choose(visibleCategory(selected)?selected:"")}
+function sync(){mount();btn.hidden=!isSigned();const heading=app.querySelector('[data-live="title"]'),subtitle=app.querySelector('[data-live="sub"]');if(heading)heading.hidden=isSigned();if(subtitle)subtitle.hidden=isSigned();const chat=document.getElementById("chatQuickAccess");if(chat)chat.style.display=isSigned()?"none":"";if(!isSigned()&&!drawer.hidden)close();if(!drawer.hidden&&selected&&!visibleCategory(selected))choose("")}
 new MutationObserver(()=>{clearTimeout(sync._timer);sync._timer=setTimeout(sync,100)}).observe(document.getElementById("liveUser"),{childList:true,subtree:true,characterData:true});
 db.auth.onAuthStateChange(()=>setTimeout(sync,200));window.addEventListener("profi:role-selected",()=>setTimeout(sync,100));document.querySelectorAll("[data-lang]").forEach(x=>x.addEventListener("click",()=>{if(!drawer.hidden)choose(selected)}));
 window.PROFI_ACCOUNT_MENU={open,close};
