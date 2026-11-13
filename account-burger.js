@@ -15,7 +15,12 @@ const style=document.createElement("style");style.textContent=`
 #profiAccountTabs button::after{content:"›";margin-left:auto;font-size:25px;font-weight:400;color:#a2a8b4}
 #profiAccountTabs button[aria-pressed="true"]{background:#fff0f3!important;color:#e92b55!important}
 #profiAccountTabs button[aria-pressed="true"]::after{color:#e92b55}
-#profiAccountTabs .account-icon{width:24px;text-align:center;font-size:19px;font-weight:400}
+#profiAccountTabs .account-icon{width:39px;height:39px;flex:0 0 39px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:var(--icon-bg,#f2f4f8);color:var(--icon-color,#536079)}
+#profiAccountTabs .account-icon svg{width:21px;height:21px;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none}
+#profiAccountTabs button{min-height:60px}
+#profiAccountTabs button:hover{background:#f7f8fb!important}
+#profiAccountTabs button[aria-pressed="true"]{background:#fff1f4!important}
+#profiAccountTabs button[aria-pressed="true"] .account-icon{filter:saturate(1.15)}
 #profiAccountBody{margin-top:12px}
 #profiAccountBody>[data-account-section]{display:none!important}
 #profiAccountBody>[data-account-section].account-active:not([hidden]){display:block!important}
@@ -30,12 +35,21 @@ const drawer=document.createElement("div");drawer.id="profiAccountDrawer";drawer
 const tabs=drawer.querySelector("#profiAccountTabs"),body=drawer.querySelector("#profiAccountBody"),title=drawer.querySelector("#profiAccountDrawerTitle");
 const lang=()=>localStorage.getItem("profi_lang")||"ru";const t=(ru,uz,tj)=>({ru,uz,tj})[lang()]||ru;
 const categories=[["overview","profiAccountOverview",["Обзор","Umumiy","Шарҳ"]],["orders","liveOrderList",["Мои заказы","Buyurtmalarim","Фармоишҳои ман"]],["work","proMyWorks",["Мои работы","Mening ishlarim","Корҳои ман"]],["feed","proFeed",["Открытые заказы","Ochiq buyurtmalar","Фармоишҳои кушода"]],["favorites","accountFavorites",["Избранные","Sevimlilar","Дӯстдоштаҳо"]],["notifications","accountNotifications",["Уведомления","Bildirishnomalar","Огоҳиҳо"]],["messages",null,["Сообщения","Xabarlar","Паёмҳо"]],["settings","liveSigned",["Настройки","Sozlamalar","Танзимот"]]];
-let selected="",mounted=new Set(),lastFocus=null;const icons={overview:"◫",orders:"▤",work:"✓",feed:"▦",favorites:"♡",notifications:"♧",messages:"✉",settings:"⚙"};
+let selected="",mounted=new Set(),lastFocus=null;const icons={
+overview:{color:"#f04a68",bg:"#fff0f3",paths:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+orders:{color:"#3478f6",bg:"#eaf2ff",paths:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6M9 9h6M9 13h6M9 17h4"/>'},
+work:{color:"#16a47d",bg:"#e6f8f0",paths:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0M10 12v3h4v-3"/>'},
+feed:{color:"#8c57e8",bg:"#f1eaff",paths:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'},
+favorites:{color:"#f04477",bg:"#ffedf3",paths:'<path d="M20.8 8.6c0 4.3-8.8 10.2-8.8 10.2S3.2 12.9 3.2 8.6a4.6 4.6 0 0 1 8.8-1.8 4.6 4.6 0 0 1 8.8 1.8Z"/>'},
+notifications:{color:"#e99a22",bg:"#fff5df",paths:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>'},
+messages:{color:"#1d9ab7",bg:"#e5f8fc",paths:'<path d="M20 11.5a8 8 0 0 1-8 8 9 9 0 0 1-4-.9L3 20l1.5-4.7A8 8 0 1 1 20 11.5Z"/><path d="M8 10h8M8 14h5"/>'},
+settings:{color:"#6e7788",bg:"#eef1f5",paths:'<path d="M10 2h4l.7 2.3 2 .9 2.1-1.1 2.7 2.8-1.1 2.1.9 2L23 12l-1.7 1-.9 2 1.1 2.1-2.7 2.8-2.1-1.1-2 .9L14 22h-4l-.7-2.3-2-.9-2.1 1.1-2.7-2.8 1.1-2.1-.9-2L1 12l1.7-1 .9-2-1.1-2.1 2.7-2.8 2.1 1.1 2-.9L10 2Z"/><circle cx="12" cy="12" r="3"/>'}
+};
 function mount(){for(const [key,id] of categories){const el=id?document.getElementById(id):null;if(el&&!mounted.has(key)){el.dataset.accountSection=key;body.append(el);mounted.add(key)}}}
 function isSigned(){return !!document.getElementById("liveUser")?.textContent?.trim()&&!document.getElementById("liveSigned")?.hidden}
 function isSpecialist(){const b=document.getElementById("proMode");return !!b&&!b.hidden&&b.classList.contains("primary")}
 function visibleCategory(key){return key!=="work"&&key!=="feed"||isSpecialist()}
-function choose(key){mount();selected=key;tabs.replaceChildren();for(const [k,,labels] of categories){if(!visibleCategory(k))continue;const b=document.createElement("button");b.type="button";b.className=k===selected?"primary":"outline";const icon=document.createElement("span");icon.className="account-icon";icon.textContent=icons[k]||"•";b.append(icon,document.createTextNode(labels[["ru","uz","tj"].indexOf(lang())]||labels[0]));b.setAttribute("aria-pressed",String(k===selected));b.onclick=()=>{if(k==="messages"){close();document.getElementById("chatQuickAccess")?.click();return}choose(k)};tabs.append(b)}for(const node of body.children)node.classList.toggle("account-active",node.dataset.accountSection===selected);title.textContent=t("Мой профиль","Mening profilim","Профили ман");drawer.querySelector("#profiAccountDrawerInner").scrollTop=0}
+function choose(key){mount();selected=key;tabs.replaceChildren();for(const [k,,labels] of categories){if(!visibleCategory(k))continue;const b=document.createElement("button");b.type="button";b.className=k===selected?"primary":"outline";const icon=document.createElement("span");icon.className="account-icon";const iconSpec=icons[k]||icons.overview;icon.style.setProperty("--icon-color",iconSpec.color);icon.style.setProperty("--icon-bg",iconSpec.bg);icon.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${iconSpec.paths}</svg>`;b.append(icon,document.createTextNode(labels[["ru","uz","tj"].indexOf(lang())]||labels[0]));b.setAttribute("aria-pressed",String(k===selected));b.onclick=()=>{if(k==="messages"){close();document.getElementById("chatQuickAccess")?.click();return}choose(k)};tabs.append(b)}for(const node of body.children)node.classList.toggle("account-active",node.dataset.accountSection===selected);title.textContent=t("Мой профиль","Mening profilim","Профили ман");drawer.querySelector("#profiAccountDrawerInner").scrollTop=0}
 function open(key=""){if(!isSigned())return;lastFocus=document.activeElement;drawer.hidden=false;document.body.classList.add("profi-account-open");btn.setAttribute("aria-expanded","true");choose(key);drawer.querySelector("#profiAccountDrawerClose").focus()}
 function close(){drawer.hidden=true;document.body.classList.remove("profi-account-open");btn.setAttribute("aria-expanded","false");lastFocus?.focus?.()}
 btn.onclick=()=>drawer.hidden?open():close();drawer.querySelector("#profiAccountDrawerClose").onclick=close;drawer.addEventListener("click",e=>{if(e.target===drawer)close()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!drawer.hidden)close()});
