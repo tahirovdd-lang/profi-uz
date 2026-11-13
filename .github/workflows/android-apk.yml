@@ -114,7 +114,14 @@ jobs:
           PROFI_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PROFI_ANDROID_KEYSTORE_PASSWORD }}
           PROFI_ANDROID_KEY_ALIAS: ${{ secrets.PROFI_ANDROID_KEY_ALIAS }}
           PROFI_ANDROID_KEY_PASSWORD: ${{ secrets.PROFI_ANDROID_KEY_PASSWORD }}
-        run: bash ./gradlew assembleRelease --no-daemon
+        run: bash ./gradlew assembleRelease bundleRelease --no-daemon
+      - name: Upload Google Play App Bundle
+        uses: actions/upload-artifact@v5
+        with:
+          name: ProfiUZ-GooglePlay-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
       - name: Publish APK for in-app update checks
         env:
           GH_TOKEN: ${{ github.token }}
@@ -130,3 +137,4 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
+
