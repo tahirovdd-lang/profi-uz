@@ -6,7 +6,7 @@ const releasesEndpoint="https://api.github.com/repos/tahirovdd-lang/profi-uz/rel
 const cap=()=>window.Capacitor;
 const platform=()=>cap()?.getPlatform?.()||"web";
 const native=()=>cap()?.isNativePlatform?.()===true;
-let latest=null,installed=null;
+let latest=null,installed=null,dismissedVersion=0;
 const lang=()=>localStorage.getItem("profi_lang")||"ru";
 const translate=(ru,uz,tj)=>({ru,uz,tj})[lang()]||ru;
 async function installedBuild(){
@@ -50,17 +50,50 @@ async function render(config){
  const newest=Number(policy.latestVersionCode)||0;
  const minimum=Number(policy.minimumVersionCode)||0;
  const url=typeof policy.downloadUrl==="string"&&/^https:\/\//.test(policy.downloadUrl)?policy.downloadUrl:"";
- const update=message("profiMobileUpdate","padding:12px 16px;text-align:center;background:#fff4dc;color:#704700");
- update.hidden=!(current>0&&newest>current&&url);
- update.replaceChildren();
- if(!update.hidden){
-  const required=minimum>current;
-  update.append(document.createTextNode(required?translate("Для продолжения работы обновите Profi.UZ. ","Profi.UZ ilovasini yangilang. ","Profi.UZ-ро навсозӣ кунед. "):translate("Доступна новая версия Profi.UZ. ","Profi.UZ yangilanishi mavjud. ","Навсозии Profi.UZ дастрас аст. ")));
-  const link=document.createElement("a");
-  link.href=url;link.target="_blank";link.rel="noopener noreferrer";
-  link.textContent=translate("Открыть обновление","Yangilash","Навсозӣ");
-  update.append(link);
+ let update=document.getElementById("profiMobileUpdate");
+ if(!(current>0&&newest>current&&url)){
+  if(update)update.remove();
+  return;
  }
+ if(dismissedVersion===newest)return;
+ if(!update){
+  update=document.createElement("div");
+  update.id="profiMobileUpdate";
+  update.setAttribute("role","dialog");
+  update.setAttribute("aria-modal","false");
+  update.setAttribute("aria-labelledby","profiUpdateTitle");
+  update.style.cssText="position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(12,23,48,.48);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-sizing:border-box";
+  document.body.append(update);
+ }
+ update.replaceChildren();
+ const required=minimum>current;
+ const panel=document.createElement("div");
+ panel.style.cssText="position:relative;box-sizing:border-box;width:100%;max-width:360px;padding:30px 24px 24px;border-radius:24px;background:#fff;color:#172443;text-align:center;box-shadow:0 22px 70px rgba(8,22,53,.26);font-family:inherit";
+ const symbol=document.createElement("div");
+ symbol.textContent="↑";
+ symbol.setAttribute("aria-hidden","true");
+ symbol.style.cssText="width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#1263ef,#23b5ff);color:white;display:grid;place-items:center;font-size:34px;font-weight:700;margin:0 auto 16px";
+ const heading=document.createElement("h2");
+ heading.id="profiUpdateTitle";
+ heading.textContent=translate("Обновление Profi.UZ","Profi.UZ yangilanishi","Навсозии Profi.UZ");
+ heading.style.cssText="font-size:22px;line-height:1.3;font-weight:800;margin:0 0 10px;color:#14254a";
+ const description=document.createElement("p");
+ description.textContent=required?translate("Для продолжения работы установите новую версию приложения.","Ilovadan foydalanishni davom ettirish uchun yangi versiyani o‘rnating.","Барои идомаи кор версияи навро насб кунед."):translate("Доступна новая версия приложения. Обновите Profi.UZ, чтобы пользоваться улучшениями.","Ilovaning yangi versiyasi tayyor. Yangilanishlarni olish uchun Profi.UZ ni yangilang.","Версияи нави барнома дастрас аст. Барои истифодаи беҳбудиҳо навсозӣ кунед.");
+ description.style.cssText="font-size:14px;line-height:1.55;color:#64718b;margin:0 0 22px";
+ const action=document.createElement("a");
+ action.href=url;action.target="_blank";action.rel="noopener noreferrer";
+ action.textContent=translate("Обновить приложение","Ilovani yangilash","Навсозии барнома");
+ action.style.cssText="display:block;padding:15px 18px;border-radius:14px;background:#145bea;color:#fff;text-decoration:none;font-size:16px;font-weight:750;text-align:center";
+ panel.append(symbol,heading,description,action);
+ if(!required){
+  const later=document.createElement("button");
+  later.type="button";
+  later.textContent=translate("Позже","Keyinroq","Баъдтар");
+  later.style.cssText="margin-top:14px;border:0;background:transparent;color:#71809b;font:600 14px inherit;padding:8px 18px;cursor:pointer";
+  later.addEventListener("click",()=>{update.remove();dismissedVersion=newest});
+  panel.append(later);
+ }
+ update.append(panel);
 }
 async function refresh(){
  if(!native())return;
