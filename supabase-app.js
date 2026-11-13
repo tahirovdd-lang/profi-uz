@@ -91,7 +91,8 @@ async function handleNativeAuthUrl(value){
  const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");
  const status=$("socialAuthStatus");
  if(oauthError){status.textContent=decodeURIComponent(oauthError);status.style.color="#bd2543";return}
- if(!code)return;
+ if(!code){sessionIssue("Android: OAUTH_CALLBACK_MISSING_CODE");return}
+ status.textContent="Завершаем вход в Profi.UZ…";
  const {error}=await db.auth.exchangeCodeForSession(code);
  if(error){status.textContent=(socialLabels[lang()]||socialLabels.ru)[3]+error.message;status.style.color="#bd2543"}
  else{status.textContent="";const {data:confirmed}=await db.auth.getSession();if(confirmed?.session?.user){user=confirmed.session.user;await verifySavedSession();await refresh()}else sessionIssue("Android: SESSION_NOT_CREATED")}
@@ -180,5 +181,5 @@ $("liveOrderForm").onsubmit=async e=>{e.preventDefault();if(!user||needsName())r
  if(user){await verifySavedSession();await refresh()}else render();const url=new URL(location.href);const oauthError=url.searchParams.get("error_description")||url.searchParams.get("error");if(oauthError){msg(t().error+": "+oauthError,true);url.searchParams.delete("error");url.searchParams.delete("error_description");url.searchParams.delete("error_code");history.replaceState(null,"",url.pathname+url.search+url.hash)}
 })().catch(e=>sessionIssue("Android: STARTUP_ERROR "+e.message));
 }
-document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);init();initNativeAuth().catch(console.error);
+document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",translate));translate();setSignupMode(false);initNativeAuth().catch(e=>sessionIssue("Android: CALLBACK_LISTENER_FAILED "+e.message)).finally(()=>init());
 })();
