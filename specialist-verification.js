@@ -52,9 +52,9 @@ async function refreshRequest(){
  if(!db())return;
  const {data:{user},error}=await db().auth.getUser();if(error||!user){request.hidden=true;return}
  if(sequence!==requestSequence)return;
- const {data:profile}=await db().from("profiles").select("role,account_enabled").eq("id",user.id).maybeSingle();
+ const {data:profile,error:profileError}=await db().from("profiles").select("role,account_enabled").eq("id",user.id).maybeSingle();
  if(sequence!==requestSequence)return;
- request.hidden=profile?.role!=="specialist"||profile.account_enabled===false;
+ request.hidden=!!profileError||profile?.role!=="specialist"||profile.account_enabled===false||!admin.hidden;
  if(request.hidden)return;
  const {data,error:verificationError}=await db().from("profi_specialist_verifications").select("status,note").eq("specialist_id",user.id).maybeSingle();
  if(sequence!==requestSequence)return;
@@ -65,7 +65,7 @@ async function refreshRequest(){
 }
 reload.onclick=()=>{load();loadStats()};
 reqButton.onclick=async()=>{reqButton.disabled=true;const {error}=await db().rpc("profi_request_verification");reqButton.disabled=false;if(error)reqText.textContent=error.message;else await refreshRequest()};
-const observer=new MutationObserver(()=>{if(!admin.hidden){load();loadStats()}});observer.observe(admin,{attributes:true,attributeFilter:["hidden"]});
+const observer=new MutationObserver(()=>{refreshRequest();if(!admin.hidden){load();loadStats()}});observer.observe(admin,{attributes:true,attributeFilter:["hidden"]});
 db()?.auth.onAuthStateChange(()=>setTimeout(refreshRequest,200));
 window.addEventListener("profi:role-selected",refreshRequest);
 window.addEventListener("profi:profile-updated",refreshRequest);
