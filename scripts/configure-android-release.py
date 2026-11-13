@@ -22,7 +22,7 @@ def releaseSigningFile = rootProject.file('release-signing.properties')
 releaseSigningFile.withInputStream { releaseSigningProps.load(it) }
 """
 src=snippet+src
-src,n=re.subn(r'android\\s*\\{',"""android {
+src,n=re.subn(r'android\s*\{',"""android {
     signingConfigs {
         release {
             storeFile file(releaseSigningProps['storeFile'])
