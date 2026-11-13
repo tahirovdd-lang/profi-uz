@@ -28,8 +28,8 @@ function orderSpecialistService(p,key,amount){
  const category=$("liveCategory"),service=$("liveService"),description=$("liveDescription");
  if(category&&[...category.options].some(o=>o.value===p.category)){category.value=p.category;category.dispatchEvent(new Event("change",{bubbles:true}))}
  if(service&&[...service.options].some(o=>o.value===key)){service.value=key;service.dispatchEvent(new Event("change",{bubbles:true}))}
- if(description){const text=tr("Хочу заказать услугу: ","Quyidagi xizmatni buyurtma qilmoqchiman: ","Мехоҳам хизматро фармоиш диҳам: ")+serviceLabel(key)+tr(". Специалист: ",". Mutaxassis: ",". Мутахассис: ")+(p.display_name||"")+tr(". Ориентировочная стоимость от ",". Taxminiy narx ",". Нархи тахминӣ аз ")+servicePriceLabel(amount)+". ";if(!description.value.trim())description.value=text}
- $("liveApp").scrollIntoView({behavior:"smooth",block:"start"});
+ if(description){const text=tr("Хочу заказать услугу: ","Quyidagi xizmatni buyurtma qilmoqchiman: ","Мехоҳам хизматро фармоиш диҳам: ")+serviceLabel(key)+tr(". Специалист: ",". Mutaxassis: ",". Мутахассис: ")+(p.display_name||"")+tr(". Ориентировочная стоимость от ",". Taxminiy narx ",". Нархи тахминӣ аз ")+servicePriceLabel(amount)+". ";description.value=text}
+ const form=$("liveOrderForm");if(form&&!form.hidden)form.scrollIntoView({behavior:"smooth",block:"center"});else $("liveApp").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function renderServicePriceRows(container,p){
  const entries=servicePriceEntries(p);if(!entries.length)return;
