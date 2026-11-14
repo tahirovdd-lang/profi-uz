@@ -42,6 +42,12 @@ const style=document.createElement("style");style.textContent=`
 #profiAccountDrawer #liveSigned #proPanel{margin-top:14px}
 #profiAccountDrawer #liveSigned .dashpanel{margin:12px 0!important}
 body.profi-account-open{overflow:hidden}
+body.profi-account-open #featuredVerifiedSpecialists,
+body.profi-account-open #proDirectory,
+body.profi-account-open #directoryResults{visibility:hidden!important;pointer-events:none!important}
+#profiAccountDrawer{z-index:100080!important}
+#profiAccountDrawerInner{isolation:isolate;position:relative;z-index:1}
+
 @media(max-width:520px){#profiAccountDrawerInner{width:100%;padding:18px 16px}#profiAccountDrawerTitle{font-size:21px!important}}
 `;document.head.append(style);
 const btn=document.createElement("button");btn.id="profiAccountMenuButton";btn.className="outline";btn.type="button";btn.textContent="☰";btn.title="Мой профиль";btn.setAttribute("aria-label","Мой профиль");btn.setAttribute("aria-expanded","false");btn.hidden=false;header.append(btn);
