@@ -28,8 +28,11 @@ form.addEventListener("submit",event=>{
  const a=first.value.trim(),b=last.value.trim();
  if(!a||!b){event.preventDefault();event.stopImmediatePropagation();(a?last:first).focus();return}
  first.value=b+" "+a;
+ setTimeout(()=>{if(!form.hidden)first.value=a},0);
 },true);
 const observer=new MutationObserver(()=>{if(!dialog.hidden&&form.hidden)close()});
 observer.observe(form,{attributes:true,attributeFilter:["hidden"]});
+setTimeout(()=>{if(!form.hidden&&!document.getElementById("liveSigned")?.hidden)open()},500);
+window.PROFI_DB?.auth?.onAuthStateChange?.(()=>setTimeout(()=>{if(!form.hidden&&!document.getElementById("liveSigned")?.hidden)open()},650));
 document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>setTimeout(translate,0)));
 })();
